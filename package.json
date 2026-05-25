@@ -1,0 +1,10 @@
+{
+  "name": "runvy",
+  "version": "1.0.0",
+  "dependencies": {
+    "plaid": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
