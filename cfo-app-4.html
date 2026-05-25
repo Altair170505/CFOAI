@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Runvy</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f0e;--surface:#111615;--surface2:#171d1b;--surface3:#1e2622;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --green:#3affa0;--green-dim:rgba(58,255,160,0.1);
+  --red:#ff5c5c;--red-dim:rgba(255,92,92,0.1);
+  --amber:#ffb830;--amber-dim:rgba(255,184,48,0.1);
+  --blue:#5ca8ff;--blue-dim:rgba(92,168,255,0.1);
+  --purple:#b48fff;--purple-dim:rgba(180,143,255,0.1);
+  --text:#f0ede8;--text2:#8a9490;--text3:#4a5450;
+}
+body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* ── UPLOAD SCREEN ── */
+.upload-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;overflow-y:auto}
+.upload-screen.hidden{display:none}
+.ulogo{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;color:var(--green);margin-bottom:2.5rem}
+.ucard{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;text-align:center}
+.utitle{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-0.025em;margin-bottom:.5rem}
+.usub{font-size:.87rem;color:var(--text2);font-weight:300;line-height:1.65;margin-bottom:2rem;max-width:420px;margin-left:auto;margin-right:auto}
+.dropzone{border:2px dashed rgba(58,255,160,.25);border-radius:14px;padding:2.25rem 2rem;cursor:pointer;transition:all .2s;margin-bottom:1.25rem;position:relative}
+.dropzone:hover,.dropzone.drag{border-color:var(--green);background:var(--green-dim)}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dicon{width:48px;height:48px;border-radius:12px;background:var(--green-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+.dtitle{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:600;margin-bottom:3px}
+.dsub{font-size:.75rem;color:var(--text2)}
+.dtag{display:inline-block;background:var(--surface3);color:var(--green);font-size:.65rem;padding:2px 9px;border-radius:20px;margin-top:8px}
+.uor{font-size:.73rem;color:var(--text3);margin-bottom:1.1rem}
+.dbtn{width:100%;padding:12px;border-radius:10px;background:var(--green);border:none;color:#0b0f0e;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s}
+.dbtn:hover{opacity:.88}
+.ufeats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:1.5rem}
+.ufeat{background:var(--surface2);border-radius:9px;padding:9px;font-size:.7rem;color:var(--text2);text-align:center}
+.ufeat strong{display:block;color:var(--text);font-size:.75rem;margin-bottom:2px}
+.lbar{width:100%;height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-top:1.25rem;display:none}
+.lfill{height:100%;background:var(--green);border-radius:4px;width:0%;transition:width .4s ease}
+.llbl{font-size:.73rem;color:var(--text2);margin-top:7px;display:none}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.slogo{padding:1.3rem 1.25rem .9rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.slogo-mark{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--green);letter-spacing:-.02em}
+.slogo-sub{font-size:.58rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.newfile-btn{font-size:.6rem;color:var(--text3);background:var(--surface3);border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-family:'Epilogue',sans-serif;transition:all .15s}
+.newfile-btn:hover{color:var(--green)}
+.snav{padding:.9rem .75rem;flex:1;display:flex;flex-direction:column;gap:2px}
+.nlbl{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);padding:.5rem .5rem .2rem;margin-top:.4rem}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;font-size:.8rem;color:var(--text2);cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:'Epilogue',sans-serif}
+.ni:hover{background:var(--surface2);color:var(--text)}
+.ni.active{background:var(--green-dim);color:var(--green)}
+.ni svg{width:14px;height:14px;flex-shrink:0}
+.nbadge{margin-left:auto;background:var(--red-dim);color:var(--red);font-size:.58rem;padding:2px 6px;border-radius:10px;font-weight:500}
+.saccounts{padding:.8rem .75rem;border-top:1px solid var(--border)}
+.sacclbl{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;padding:0 4px}
+.accchip{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;margin-bottom:3px;cursor:pointer;transition:all .15s}
+.accchip:hover{background:var(--surface2)}
+.accdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.accname{font-size:.72rem;color:var(--text2);flex:1}
+.accbal{font-size:.7rem;color:var(--text);font-weight:500}
+.addacc{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:8px;font-size:.72rem;color:var(--green);cursor:pointer;border:1px dashed rgba(58,255,160,.25);margin-top:3px;transition:all .15s;background:none;width:100%;font-family:'Epilogue',sans-serif}
+.addacc:hover{border-color:var(--green);background:var(--green-dim)}
+.sfileinfo{padding:.7rem 1rem;border-top:1px solid var(--border)}
+.filepill{display:flex;align-items:center;gap:7px;background:var(--surface3);border-radius:7px;padding:7px 9px}
+.filedot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.filename{font-size:.68rem;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filesize{font-size:.62rem;color:var(--text3)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;min-width:0}
+.topbar{padding:1rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:10;gap:12px}
+.tbl h1{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:600;letter-spacing:-.02em}
+.tbl p{font-size:.7rem;color:var(--text2);margin-top:2px}
+.tbr{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pbtn{padding:7px 13px;border-radius:8px;font-size:.75rem;font-family:'Epilogue',sans-serif;cursor:pointer;transition:all .15s;font-weight:500}
+.pout{background:none;border:1px solid var(--border2);color:var(--text2)}
+.pout:hover{border-color:var(--green);color:var(--green)}
+.pgrn{background:var(--green);border:none;color:#0b0f0e}
+.pgrn:hover{opacity:.88}
+.taxalert{display:flex;align-items:center;gap:6px;background:var(--amber-dim);border:1px solid rgba(255,184,48,.2);border-radius:8px;padding:6px 11px;font-size:.7rem;color:var(--amber);cursor:pointer;white-space:nowrap}
+.pb{padding:1.75rem 2rem}
+.page{display:none}
+.page.active{display:block;animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SHARED ── */
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.ct{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:-.01em}
+.ca{font-size:.7rem;color:var(--green);cursor:pointer;background:none;border:none;font-family:'Epilogue',sans-serif}
+.kg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.kg3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.kc{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem}
+.kt{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.kl{font-size:.68rem;color:var(--text2)}
+.kb{font-size:.6rem;padding:2px 7px;border-radius:6px;font-weight:500}
+.bg{background:var(--green-dim);color:var(--green)}
+.br{background:var(--red-dim);color:var(--red)}
+.ba{background:var(--amber-dim);color:var(--amber)}
+.bb{background:var(--blue-dim);color:var(--blue)}
+.bp{background:var(--purple-dim);color:var(--purple)}
+.kv{font-family:'Syne',sans-serif;font-size:1.45rem;font-weight:700;letter-spacing:-.025em;line-height:1;margin-bottom:3px}
+.ks{font-size:.66rem;color:var(--text3)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem}
+.g31{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:1.5rem}
+.mb{margin-bottom:1.5rem}
+.div{height:1px;background:var(--border);margin:1rem 0}
+.ic{background:var(--green-dim);border:1px solid rgba(58,255,160,.15);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1rem}
+.il{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:3px}
+.it{font-size:.82rem;color:var(--text);line-height:1.55}
+.rb{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1.75rem}
+.rl{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.rn{font-family:'Syne',sans-serif;font-size:2.1rem;font-weight:700;color:var(--green);letter-spacing:-.03em;line-height:1}
+.rs{font-size:.75rem;color:var(--text2);margin-top:3px}
+.rt{height:6px;background:var(--surface3);border-radius:6px;margin-bottom:7px;overflow:hidden}
+.rf{height:100%;background:linear-gradient(90deg,var(--green),#1fd880);border-radius:6px;width:0%;transition:width 1.2s ease}
+.rm{display:flex;justify-content:space-between;font-size:.6rem;color:var(--text3)}
+.rstat{text-align:right}
+.rsv{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:600}
+.rsl{font-size:.6rem;color:var(--text3);margin-top:1px}
+.aib{display:flex;align-items:center;gap:11px;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:10px 15px;margin-bottom:1.5rem;transition:border-color .15s}
+.aib:hover{border-color:var(--green)}
+.aip{width:26px;height:26px;border-radius:7px;background:var(--green-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--green)}
+.aic{display:flex;gap:6px;flex-wrap:wrap}
+.aicp{padding:4px 9px;border-radius:6px;font-size:.68rem;background:var(--surface3);color:var(--text2);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'Epilogue',sans-serif}
+.aicp:hover{border-color:var(--green);color:var(--green)}
+.cha{height:185px;display:flex;align-items:flex-end;gap:3px;padding:0 3px}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bs2{width:100%;border-radius:3px 3px 0 0;transition:height .8s ease;min-height:2px}
+.bl{font-size:.55rem;color:var(--text3)}
+.cy{display:flex;flex-direction:column;justify-content:space-between;font-size:.55rem;color:var(--text3);height:185px;padding:0 7px 17px 0;text-align:right}
+.cw{display:flex}
+.cl2{display:flex;gap:14px;margin-top:9px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--text2)}
+.ld{width:7px;height:7px;border-radius:2px}
+.txn-table{width:100%;border-collapse:collapse}
+.txn-table th{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.txn-table td{padding:8px 10px;font-size:.79rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.txn-table tr:last-child td{border-bottom:none}
+.txn-table tr:hover td{background:var(--surface3)}
+.ttag{font-size:.6rem;padding:2px 7px;border-radius:5px;font-weight:500;display:inline-block}
+.top{background:var(--blue-dim);color:var(--blue)}
+.tca{background:var(--purple-dim);color:var(--purple)}
+.tta{background:var(--amber-dim);color:var(--amber)}
+.tre{background:var(--green-dim);color:var(--green)}
+.amd{color:var(--red);font-family:'Syne',sans-serif;font-weight:600;font-size:.82rem;text-align:right}
+.amc{color:var(--green);font-family:'Syne',sans-serif;font-weight:600;font-size:.82rem;text-align:right}
+.ft{width:100%;border-collapse:collapse}
+.ft tr:hover td{background:rgba(58,255,160,.03)}
+.fl{padding:6px 9px;font-size:.8rem;color:var(--text2)}
+.fv{padding:6px 9px;font-size:.8rem;color:var(--text);text-align:right;font-family:'Syne',sans-serif;font-weight:500}
+.fsec{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:9px 9px 3px;font-weight:500}
+.taxitem{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:9px;background:var(--surface3);margin-bottom:6px;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.taxitem:hover{background:var(--surface2);border-color:var(--border2)}
+
+/* ── BANK CONNECT ── */
+.cwrap{padding:1.75rem 2rem;max-width:860px;margin:0 auto}
+.chero{text-align:center;margin-bottom:1.75rem}
+.cey{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:.65rem}
+.ctitle{font-family:'Syne',sans-serif;font-size:clamp(1.3rem,3vw,1.9rem);font-weight:700;letter-spacing:-.025em;margin-bottom:.5rem}
+.csub{font-size:.85rem;color:var(--text2);max-width:440px;margin:0 auto;line-height:1.65;font-weight:300}
+.csteps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:1.75rem}
+.cstep{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--text3)}
+.csnum{width:24px;height:24px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:500;transition:all .3s;flex-shrink:0}
+.cstep.csa .csnum{background:var(--green);border-color:var(--green);color:#0b0f0e}
+.cstep.csd .csnum{background:var(--green-dim);border-color:rgba(58,255,160,.3);color:var(--green)}
+.cstep.csa{color:var(--text)}
+.cstep.csd{color:var(--text2)}
+.csline{width:36px;height:1px;background:var(--border);margin:0 4px}
+.csline.csd{background:rgba(58,255,160,.3)}
+.ccard{background:var(--surface2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1rem}
+.cscreen{display:none}
+.cscreen.active{display:block;animation:fi .3s ease}
+.csh{padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)}
+.csh h3{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:600;margin-bottom:2px}
+.csh p{font-size:.73rem;color:var(--text2)}
+.tygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:1.2rem 1.4rem}
+.tycard{background:var(--surface3);border:1px solid var(--border);border-radius:11px;padding:1.2rem;cursor:pointer;transition:all .2s;text-align:center}
+.tycard:hover{border-color:var(--border2);transform:translateY(-1px)}
+.tycard.sel{border-color:rgba(58,255,160,.4);background:var(--green-dim)}
+.tyico{font-size:1.7rem;margin-bottom:7px}
+.tyname{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;margin-bottom:2px}
+.tydesc{font-size:.68rem;color:var(--text2);line-height:1.4}
+.tycard.sel .tydesc{color:var(--green);opacity:.8}
+.bsearch{width:100%;padding:9px 13px;border-radius:9px;background:var(--surface3);border:1px solid var(--border);color:var(--text);font-size:.81rem;font-family:'Epilogue',sans-serif;outline:none;margin-bottom:.9rem}
+.bsearch:focus{border-color:var(--green)}
+.bsearch::placeholder{color:var(--text3)}
+.blist{display:flex;flex-direction:column;gap:5px;margin-bottom:.9rem}
+.bitem{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:9px;background:var(--surface3);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.bitem:hover{background:var(--surface2);border-color:var(--border2)}
+.bitem.sel{background:var(--green-dim);border-color:rgba(58,255,160,.3)}
+.blogo{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bname{font-size:.81rem;font-weight:500;flex:1}
+.btype{font-size:.65rem;color:var(--text3)}
+.bitem.sel .btype{color:var(--green)}
+.bchk{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bitem.sel .bchk{background:var(--green);border-color:var(--green)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:7px;margin-bottom:.9rem}
+.pcard{background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:.85rem;cursor:pointer;transition:all .2s;text-align:center}
+.pcard:hover{border-color:var(--border2)}
+.pcard.sel{border-color:rgba(58,255,160,.4);background:var(--green-dim)}
+.plogo{font-size:1.4rem;margin-bottom:4px}
+.pname{font-size:.73rem;font-weight:500}
+.ptag{font-size:.58rem;color:var(--text3);margin-top:1px}
+.fg{margin-bottom:.9rem}
+.flbl{font-size:.7rem;color:var(--text2);margin-bottom:5px;display:block}
+.finp{width:100%;padding:9px 13px;border-radius:9px;background:var(--surface3);border:1px solid var(--border);color:var(--text);font-size:.83rem;font-family:'Epilogue',sans-serif;outline:none;transition:border-color .15s}
+.finp:focus{border-color:var(--green)}
+.finp::placeholder{color:var(--text3)}
+.secnote{display:flex;align-items:flex-start;gap:9px;background:var(--surface3);border-radius:9px;padding:10px 12px;margin:.9rem 0}
+.secnote svg{flex-shrink:0;margin-top:1px;color:var(--green);width:14px;height:14px}
+.secnote p{font-size:.71rem;color:var(--text2);line-height:1.55}
+.mfasec{display:none}
+.asisec{display:flex;flex-direction:column;gap:7px;margin-bottom:.9rem}
+.asiitem{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;background:var(--surface3);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.asiitem:hover{border-color:var(--border2)}
+.asiitem.sel{border-color:rgba(58,255,160,.35);background:var(--green-dim)}
+.asico{width:35px;height:35px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:var(--surface)}
+.asinfo{flex:1}
+.asname{font-size:.81rem;font-weight:500}
+.asnum{font-size:.66rem;color:var(--text3);margin-top:1px}
+.asbal{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:600}
+.aschk{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.asiitem.sel .aschk{background:var(--green);border-color:var(--green)}
+.syncctr{padding:2.5rem 1.5rem;text-align:center}
+.sico{width:66px;height:66px;border-radius:16px;background:var(--green-dim);border:1px solid rgba(58,255,160,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem}
+.stitle{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:600;margin-bottom:.4rem}
+.ssub{font-size:.81rem;color:var(--text2);margin-bottom:1.5rem;font-weight:300}
+.strack{height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-bottom:6px;width:100%;max-width:320px;margin-left:auto;margin-right:auto}
+.sfill{height:100%;background:var(--green);border-radius:4px;width:0%;transition:width .5s ease}
+.slbl{font-size:.68rem;color:var(--text2);text-align:left;width:100%;max-width:320px;margin:0 auto}
+.srows{display:flex;flex-direction:column;gap:6px;width:100%;max-width:320px;margin:1.1rem auto 0}
+.srow{display:flex;align-items:center;gap:9px;font-size:.76rem;color:var(--text3)}
+.srow.srd{color:var(--text)}
+.srow.sra{color:var(--green)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--surface3);flex-shrink:0;transition:all .3s}
+.srow.srd .sdot{background:var(--green)}
+.srow.sra .sdot{background:var(--green);box-shadow:0 0 7px var(--green)}
+.succ{padding:2rem 1.4rem}
+.sucico{width:55px;height:55px;border-radius:15px;background:var(--green-dim);border:1px solid rgba(58,255,160,.25);display:flex;align-items:center;justify-content:center;margin:0 auto .9rem}
+.suctitle{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.35rem;text-align:center}
+.sucsub{font-size:.81rem;color:var(--text2);font-weight:300;text-align:center;margin-bottom:1.25rem}
+.totbar{background:var(--green-dim);border:1px solid rgba(58,255,160,.2);border-radius:13px;padding:1rem 1.3rem;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between}
+.totlbl{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+.totval{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;color:var(--green)}
+.totsub{font-size:.68rem;color:var(--text2);margin-top:2px}
+.connitem{display:flex;align-items:center;gap:11px;padding:10px 13px;background:var(--surface3);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)}
+.conndot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 5px var(--green)}
+.connname{font-size:.8rem;font-weight:500;flex:1}
+.connbal{font-size:.78rem;color:var(--green);font-weight:500}
+.connbadge{font-size:.6rem;color:var(--green);background:var(--green-dim);padding:2px 7px;border-radius:4px}
+.cbtnrow{display:flex;gap:9px;padding:.9rem 1.4rem;border-top:1px solid var(--border)}
+.cbpri{flex:1;padding:10px;border-radius:9px;background:var(--green);border:none;color:#0b0f0e;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.cbpri:hover{opacity:.88}
+.cbpri:disabled{opacity:.3;cursor:not-allowed}
+.cbsec{padding:10px 16px;border-radius:9px;background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:.81rem;cursor:pointer;transition:all .15s}
+.cbsec:hover{border-color:var(--text3);color:var(--text)}
+.secbar{display:flex;align-items:center;justify-content:center;gap:16px;padding:.8rem 1.4rem;border-top:1px solid var(--border);flex-wrap:wrap}
+.secitem{display:flex;align-items:center;gap:5px;font-size:.63rem;color:var(--text3)}
+.secitem svg{color:var(--green);width:10px;height:10px}
+.nsgsec{display:none}
+.cpad{padding:0 1.4rem 1rem}
+
+/* ── EXPORTS ── */
+.dlcard{background:var(--surface3);border-radius:11px;padding:1rem;display:flex;flex-direction:column;gap:9px}
+.dlico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nsgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.1rem}
+.nsc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.85rem}
+.nsico{font-size:1.1rem;margin-bottom:4px}
+.nstitle{font-size:.76rem;font-weight:500;margin-bottom:2px}
+.nsdesc{font-size:.66rem;color:var(--text2);line-height:1.45}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+
+/* ── AUTH SCREENS ── */
+.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:1100;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto}
+.auth-overlay.hidden{display:none}
+.auth-wrap{width:100%;max-width:420px}
+.auth-logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:var(--green);text-align:center;margin-bottom:2rem;letter-spacing:-.02em}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;position:relative;overflow:hidden}
+.auth-card::before{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;border-radius:50%;background:var(--green-dim);pointer-events:none}
+.auth-tabs{display:flex;background:var(--surface3);border-radius:10px;padding:3px;margin-bottom:1.75rem}
+.auth-tab{flex:1;padding:9px;border-radius:8px;font-size:.82rem;font-family:'Epilogue',sans-serif;cursor:pointer;border:none;background:none;color:var(--text2);transition:all .2s;font-weight:400}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.auth-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.025em;margin-bottom:.35rem}
+.auth-sub{font-size:.82rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.55;font-weight:300}
+.auth-form{display:flex;flex-direction:column;gap:.85rem}
+.auth-fg{display:flex;flex-direction:column;gap:5px}
+.auth-lbl{font-size:.72rem;color:var(--text2)}
+.auth-inp{width:100%;padding:11px 14px;border-radius:10px;background:var(--surface3);border:1px solid var(--border);color:var(--text);font-size:.85rem;font-family:'Epilogue',sans-serif;outline:none;transition:border-color .15s}
+.auth-inp:focus{border-color:var(--green)}
+.auth-inp::placeholder{color:var(--text3)}
+.auth-btn{width:100%;padding:12px;border-radius:10px;background:var(--green);border:none;color:#0b0f0e;font-family:'Syne',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:.25rem}
+.auth-btn:hover{opacity:.88;transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:.25rem 0}
+.auth-divider span{font-size:.72rem;color:var(--text3);white-space:nowrap}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-social{width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Epilogue',sans-serif;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .15s}
+.auth-social:hover{border-color:var(--border2);background:var(--surface3)}
+.auth-switch{text-align:center;font-size:.75rem;color:var(--text3);margin-top:1rem}
+.auth-switch a{color:var(--green);cursor:pointer;text-decoration:none}
+.auth-error{background:var(--red-dim);border:1px solid rgba(255,92,92,.2);border-radius:8px;padding:9px 12px;font-size:.77rem;color:var(--red);display:none}
+.auth-error.show{display:block}
+.auth-success{background:var(--green-dim);border:1px solid rgba(58,255,160,.2);border-radius:8px;padding:9px 12px;font-size:.77rem;color:var(--green);display:none}
+.auth-success.show{display:block}
+.auth-features{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:1.25rem}
+.auth-feat{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+.auth-feat i{color:var(--green);font-size:13px}
+.user-pill{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all .15s;font-size:.75rem;color:var(--text2)}
+.user-pill:hover{border-color:var(--green);color:var(--green)}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:var(--green-dim);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:500;color:var(--green);flex-shrink:0}
+/* bank modal */
+.bmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.bmodal-overlay.hidden{display:none}
+.bmodal{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+.bmodal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px;transition:all .15s}
+.bmodal-close:hover{border-color:var(--red);color:var(--red)}
+.bmodal-head{padding:1.5rem 1.5rem 0}
+.bmodal-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:4px}
+.bmodal-sub{font-size:.78rem;color:var(--text2);margin-bottom:1.25rem}
+.bmodal-steps{display:flex;align-items:center;gap:0;margin-bottom:0;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.bms{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--text3)}
+.bms-n{width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:500;flex-shrink:0;transition:all .25s}
+.bms.bma .bms-n{background:var(--green);border-color:var(--green);color:#0b0f0e}
+.bms.bmd .bms-n{background:var(--green-dim);border-color:rgba(58,255,160,.3);color:var(--green)}
+.bms.bma{color:var(--text)}
+.bms.bmd{color:var(--text2)}
+.bms-line{flex:1;height:1px;background:var(--border);margin:0 4px;min-width:20px}
+.bms-line.bmd{background:rgba(58,255,160,.3)}
+.bmodal-body{padding:1.25rem 1.5rem}
+.bm-screen{display:none}
+.bm-screen.active{display:block;animation:fi .3s ease}
+.bm-typegrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1.25rem}
+.bm-type{background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer;text-align:center;transition:all .2s}
+.bm-type:hover{border-color:var(--border2);transform:translateY(-1px)}
+.bm-type.sel{border-color:rgba(58,255,160,.4);background:var(--green-dim)}
+.bm-type-ico{font-size:1.6rem;margin-bottom:5px}
+.bm-type-name{font-size:.78rem;font-weight:500;margin-bottom:2px}
+.bm-type-desc{font-size:.65rem;color:var(--text2);line-height:1.4}
+.bm-type.sel .bm-type-desc{color:var(--green);opacity:.8}
+.bm-bank-search{width:100%;padding:9px 13px;border-radius:9px;background:var(--surface3);border:1px solid var(--border);color:var(--text);font-size:.81rem;font-family:'Epilogue',sans-serif;outline:none;margin-bottom:.85rem}
+.bm-bank-search:focus{border-color:var(--green)}
+.bm-bank-search::placeholder{color:var(--text3)}
+.bm-blist{display:flex;flex-direction:column;gap:5px;max-height:260px;overflow-y:auto;margin-bottom:1rem}
+.bm-bitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface3);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.bm-bitem:hover{background:var(--surface2);border-color:var(--border2)}
+.bm-bitem.sel{background:var(--green-dim);border-color:rgba(58,255,160,.3)}
+.bm-blogo{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bm-bname{font-size:.82rem;font-weight:500;flex:1}
+.bm-btype{font-size:.65rem;color:var(--text3)}
+.bm-bitem.sel .bm-btype{color:var(--green)}
+.bm-check{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bm-bitem.sel .bm-check{background:var(--green);border-color:var(--green)}
+.bm-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:1rem}
+.bm-pcard{background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:.85rem;cursor:pointer;text-align:center;transition:all .15s}
+.bm-pcard:hover{border-color:var(--border2)}
+.bm-pcard.sel{border-color:rgba(58,255,160,.4);background:var(--green-dim)}
+.bm-fg{margin-bottom:.85rem}
+.bm-lbl{font-size:.7rem;color:var(--text2);margin-bottom:5px;display:block}
+.bm-inp{width:100%;padding:9px 13px;border-radius:8px;background:var(--surface3);border:1px solid var(--border);color:var(--text);font-size:.83rem;font-family:'Epilogue',sans-serif;outline:none;transition:border-color .15s}
+.bm-inp:focus{border-color:var(--green)}
+.bm-inp::placeholder{color:var(--text3)}
+.bm-secnote{display:flex;align-items:flex-start;gap:8px;background:var(--surface3);border-radius:8px;padding:9px 11px;margin:.85rem 0;font-size:.71rem;color:var(--text2);line-height:1.5}
+.bm-secnote i{color:var(--green);font-size:13px;margin-top:1px;flex-shrink:0}
+.bm-mfa{display:none}
+.bm-acclist{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.bm-accitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:var(--surface3);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.bm-accitem:hover{border-color:var(--border2)}
+.bm-accitem.sel{border-color:rgba(58,255,160,.35);background:var(--green-dim)}
+.bm-accico{width:34px;height:34px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bm-accinfo{flex:1}
+.bm-accname{font-size:.8rem;font-weight:500}
+.bm-accnum{font-size:.65rem;color:var(--text3);margin-top:1px}
+.bm-accbal{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:600}
+.bm-acchk{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bm-accitem.sel .bm-acchk{background:var(--green);border-color:var(--green)}
+.bm-sync{text-align:center;padding:1.5rem 0}
+.bm-sync-ico{width:60px;height:60px;border-radius:16px;background:var(--green-dim);border:1px solid rgba(58,255,160,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+.bm-sync-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:.35rem}
+.bm-sync-sub{font-size:.8rem;color:var(--text2);margin-bottom:1.25rem}
+.bm-track{height:4px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-bottom:6px;max-width:300px;margin-left:auto;margin-right:auto}
+.bm-fill{height:100%;background:var(--green);border-radius:4px;width:0%;transition:width .5s ease}
+.bm-slbl{font-size:.68rem;color:var(--text2);max-width:300px;margin:0 auto 1rem}
+.bm-srows{display:flex;flex-direction:column;gap:5px;max-width:300px;margin:0 auto}
+.bm-srow{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--text3)}
+.bm-srow.sd{color:var(--text)}
+.bm-srow.sa{color:var(--green)}
+.bm-sdot{width:6px;height:6px;border-radius:50%;background:var(--surface3);flex-shrink:0;transition:all .3s}
+.bm-srow.sd .bm-sdot{background:var(--green)}
+.bm-srow.sa .bm-sdot{background:var(--green);box-shadow:0 0 6px var(--green)}
+.bm-succ{text-align:center;padding:.5rem 0 1rem}
+.bm-succ-ico{width:52px;height:52px;border-radius:14px;background:var(--green-dim);border:1px solid rgba(58,255,160,.2);display:flex;align-items:center;justify-content:center;margin:0 auto .85rem}
+.bm-succ-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:.3rem}
+.bm-succ-sub{font-size:.78rem;color:var(--text2);margin-bottom:1rem}
+.bm-conn-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface3);border-radius:9px;margin-bottom:6px;border:1px solid var(--border)}
+.bm-conn-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 5px var(--green)}
+.bm-conn-name{font-size:.8rem;font-weight:500;flex:1}
+.bm-conn-bal{font-size:.78rem;color:var(--green);font-weight:500}
+.bm-conn-badge{font-size:.6rem;color:var(--green);background:var(--green-dim);padding:2px 7px;border-radius:4px}
+.bm-secbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:.85rem 1.5rem;border-top:1px solid var(--border);flex-wrap:wrap}
+.bm-si{display:flex;align-items:center;gap:4px;font-size:.63rem;color:var(--text3)}
+.bm-si i{color:var(--green);font-size:11px}
+.bm-btnrow{display:flex;gap:8px;padding:.85rem 1.5rem;border-top:1px solid var(--border)}
+.bm-pri{flex:1;padding:10px;border-radius:9px;background:var(--green);border:none;color:#0b0f0e;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.bm-pri:hover{opacity:.88}
+.bm-pri:disabled{opacity:.3;cursor:not-allowed}
+.bm-sec{padding:10px 16px;border-radius:9px;background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Epilogue',sans-serif;font-size:.81rem;cursor:pointer;transition:all .15s}
+.bm-sec:hover{border-color:var(--text3);color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-wrap">
+    <div class="auth-logo">◈ Runvy</div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign in</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Create account</button>
+      </div>
+      <!-- LOGIN -->
+      <div id="formLogin">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Know your runway. Always. is waiting.</div>
+        <div class="auth-form">
+          <div class="auth-error" id="loginErr">Incorrect email or password. Try again.</div>
+          <div class="auth-fg"><label class="auth-lbl">Email</label><input class="auth-inp" type="email" id="loginEmail" placeholder="you@company.com" oninput="clearAuthErr('login')"></div>
+          <div class="auth-fg"><label class="auth-lbl">Password</label><input class="auth-inp" type="password" id="loginPass" placeholder="••••••••" oninput="clearAuthErr('login')" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign in →</button>
+          <div class="auth-divider"><span>or</span></div>
+          <button class="auth-social" onclick="doSocialLogin('Google')">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <button class="auth-social" onclick="doSocialLogin('Apple')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Continue with Apple
+          </button>
+        </div>
+        <p class="auth-switch">No account? <a onclick="switchTab('signup')">Create one free</a></p>
+      </div>
+      <!-- SIGNUP -->
+      <div id="formSignup" style="display:none">
+        <div class="auth-title">Start for free</div>
+        <div class="auth-sub">Your financial co-pilot is ready in 2 minutes. No credit card needed.</div>
+        <div class="auth-form">
+          <div class="auth-error" id="signupErr">Please fill in all fields.</div>
+          <div class="auth-success" id="signupOk">Account created! Signing you in…</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem">
+            <div class="auth-fg"><label class="auth-lbl">First name</label><input class="auth-inp" type="text" id="signupFirst" placeholder="Alex"></div>
+            <div class="auth-fg"><label class="auth-lbl">Last name</label><input class="auth-inp" type="text" id="signupLast" placeholder="Johnson"></div>
+          </div>
+          <div class="auth-fg"><label class="auth-lbl">Email</label><input class="auth-inp" type="email" id="signupEmail" placeholder="you@company.com"></div>
+          <div class="auth-fg"><label class="auth-lbl">Password</label><input class="auth-inp" type="password" id="signupPass" placeholder="8+ characters" onkeydown="if(event.key==='Enter')doSignup()"></div>
+          <div class="auth-fg"><label class="auth-lbl">Company / startup name</label><input class="auth-inp" type="text" id="signupCompany" placeholder="Acme Inc."></div>
+          <button class="auth-btn" id="signupBtn" onclick="doSignup()">Create free account →</button>
+          <div class="auth-divider"><span>or</span></div>
+          <button class="auth-social" onclick="doSocialLogin('Google')">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+        </div>
+        <p class="auth-switch">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
+        <div class="auth-features">
+          <div class="auth-feat"><i class="ti ti-check" aria-hidden="true"></i>Free 14-day trial</div>
+          <div class="auth-feat"><i class="ti ti-check" aria-hidden="true"></i>No credit card</div>
+          <div class="auth-feat"><i class="ti ti-lock" aria-hidden="true"></i>Bank-level security</div>
+          <div class="auth-feat"><i class="ti ti-x" aria-hidden="true"></i>Cancel anytime</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BANK MODAL ══ -->
+<div class="bmodal-overlay hidden" id="bankModal">
+  <div class="bmodal">
+    <button class="bmodal-close" onclick="closeBankModal()" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+    <div class="bmodal-head">
+      <div class="bmodal-title">Connect a bank account</div>
+      <div class="bmodal-sub">Secure · Read-only · Powered by Plaid</div>
+      <div class="bmodal-steps">
+        <div class="bms bma" id="bms1"><div class="bms-n">1</div><span>Type</span></div>
+        <div class="bms-line" id="bml1"></div>
+        <div class="bms" id="bms2"><div class="bms-n">2</div><span>Bank</span></div>
+        <div class="bms-line" id="bml2"></div>
+        <div class="bms" id="bms3"><div class="bms-n">3</div><span>Login</span></div>
+        <div class="bms-line" id="bml3"></div>
+        <div class="bms" id="bms4"><div class="bms-n">4</div><span>Select</span></div>
+        <div class="bms-line" id="bml4"></div>
+        <div class="bms" id="bms5"><div class="bms-n">5</div><span>Done</span></div>
+      </div>
+    </div>
+    <div class="bmodal-body">
+      <!-- Step 1: Type -->
+      <div class="bm-screen active" id="bms-1">
+        <div class="bm-typegrid">
+          <div class="bm-type" onclick="bmSelType(this,'bank')"><div class="bm-type-ico">🏦</div><div class="bm-type-name">Bank</div><div class="bm-type-desc">Checking & savings</div></div>
+          <div class="bm-type" onclick="bmSelType(this,'card')"><div class="bm-type-ico">💳</div><div class="bm-type-name">Card</div><div class="bm-type-desc">Credit & debit</div></div>
+          <div class="bm-type" onclick="bmSelType(this,'payment')"><div class="bm-type-ico">⚡</div><div class="bm-type-name">Payments</div><div class="bm-type-desc">Stripe, PayPal</div></div>
+        </div>
+        <div class="bm-secbar">
+          <div class="bm-si"><i class="ti ti-lock" aria-hidden="true"></i>256-bit encryption</div>
+          <div class="bm-si"><i class="ti ti-eye-off" aria-hidden="true"></i>Read-only access</div>
+          <div class="bm-si"><i class="ti ti-shield-check" aria-hidden="true"></i>SOC 2 compliant</div>
+        </div>
+      </div>
+      <!-- Step 2: Bank -->
+      <div class="bm-screen" id="bms-2">
+        <div id="bm-bankwrap">
+          <input class="bm-bank-search" id="bmSearch" type="text" placeholder="Search your bank…" oninput="bmFilterB(this.value)">
+          <div class="bm-blist" id="bmBlist"></div>
+        </div>
+        <div id="bm-paywrap" style="display:none">
+          <div class="bm-pgrid" id="bmPgrid"></div>
+        </div>
+      </div>
+      <!-- Step 3: Login -->
+      <div class="bm-screen" id="bms-3">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--surface3);border-radius:9px;padding:10px 12px;margin-bottom:1rem">
+          <div style="width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px" id="bmAuthLogo">🏦</div>
+          <div><div style="font-size:.83rem;font-weight:500" id="bmAuthName">Bank</div><div style="font-size:.68rem;color:var(--text2)">Secure OAuth via Plaid</div></div>
+          <div style="margin-left:auto;background:var(--blue-dim);color:var(--blue);font-size:.58rem;padding:2px 7px;border-radius:4px">🔒 Encrypted</div>
+        </div>
+        <div class="bm-fg"><label class="bm-lbl">Username</label><input class="bm-inp" type="text" id="bmUser" placeholder="Enter username" oninput="bmChkAuth()"></div>
+        <div class="bm-fg"><label class="bm-lbl">Password</label><input class="bm-inp" type="password" id="bmPass" placeholder="Enter password" oninput="bmChkAuth()"></div>
+        <div class="bm-secnote"><i class="ti ti-shield-check" aria-hidden="true"></i>Runvy uses Plaid — we never store your credentials. Trusted by 7,000+ apps with bank-level encryption.</div>
+        <div class="bm-mfa" id="bmMfa">
+          <div class="bm-fg"><label class="bm-lbl">Two-factor code</label><input class="bm-inp" type="text" id="bmMfaCode" placeholder="6-digit code" maxlength="6"></div>
+        </div>
+      </div>
+      <!-- Step 4: Select accounts -->
+      <div class="bm-screen" id="bms-4">
+        <div class="bm-acclist" id="bmAccList"></div>
+      </div>
+      <!-- Step 5: Syncing -->
+      <div class="bm-screen" id="bms-5">
+        <div class="bm-sync">
+          <div class="bm-sync-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3affa0" stroke-width="1.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div>
+          <div class="bm-sync-title">Connecting…</div>
+          <div class="bm-sync-sub">Establishing secure connection</div>
+          <div class="bm-track"><div class="bm-fill" id="bmFill"></div></div>
+          <div class="bm-slbl" id="bmSlbl">Authenticating…</div>
+          <div class="bm-srows">
+            <div class="bm-srow sa" id="bmsr1"><div class="bm-sdot"></div>Verifying credentials</div>
+            <div class="bm-srow" id="bmsr2"><div class="bm-sdot"></div>Fetching account details</div>
+            <div class="bm-srow" id="bmsr3"><div class="bm-sdot"></div>Importing 90 days of transactions</div>
+            <div class="bm-srow" id="bmsr4"><div class="bm-sdot"></div>AI categorizing expenses</div>
+            <div class="bm-srow" id="bmsr5"><div class="bm-sdot"></div>Computing runway & cash flow</div>
+          </div>
+        </div>
+      </div>
+      <!-- Step 6: Success -->
+      <div class="bm-screen" id="bms-6">
+        <div class="bm-succ">
+          <div class="bm-succ-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3affa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div class="bm-succ-title">Connected!</div>
+          <div class="bm-succ-sub">Your transactions are syncing live.</div>
+          <div id="bmConnList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bm-btnrow" id="bmBtnRow">
+      <button class="bm-sec" id="bmBtnBack" onclick="bmBack()" style="display:none">← Back</button>
+      <button class="bm-pri" id="bmBtnNext" disabled onclick="bmNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ UPLOAD SCREEN ══ -->
+<div class="upload-screen" id="uploadScreen">
+  <div class="ulogo">◈ Runvy</div>
+  <div class="ucard">
+    <h1 class="utitle">Connect your Excel</h1>
+    <p class="usub">Upload your <strong>Runvy Financial Statements.xlsx</strong> and every page — dashboard, income statement, balance sheet, cash flow, taxes — populates instantly from your real numbers.</p>
+    <div class="dropzone" id="dropzone">
+      <input type="file" accept=".xlsx,.xls" id="fileInput" onchange="handleFile(this.files[0])">
+      <div class="dicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+      <div class="dtitle">Drop your Excel here</div>
+      <div class="dsub">or click to browse</div>
+      <div class="dtag">.xlsx · .xls supported</div>
+    </div>
+    <div class="uor">— or —</div>
+    <button class="dbtn" onclick="loadDemo()">Load demo data and explore →</button>
+    <div class="lbar" id="lbar"><div class="lfill" id="lfill"></div></div>
+    <div class="llbl" id="llbl">Reading your Excel…</div>
+    <div class="ufeats">
+      <div class="ufeat"><strong>All pages</strong>from your sheet</div>
+      <div class="ufeat"><strong>Live charts</strong>your numbers</div>
+      <div class="ufeat"><strong>PDF & tax</strong>ready to download</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="slogo">
+    <div><div class="slogo-mark">◈ Runvy</div><div class="slogo-sub">Know your runway. Always.</div></div>
+    <button class="newfile-btn" onclick="resetUpload()">↑ New file</button>
+  </div>
+  <nav class="snav">
+    <div class="nlbl">Overview</div>
+    <button class="ni active" onclick="nav('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+    </button>
+    <div class="nlbl">Statements</div>
+    <button class="ni" onclick="nav('income',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Income Statement
+    </button>
+    <button class="ni" onclick="nav('balance',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Balance Sheet
+    </button>
+    <button class="ni" onclick="nav('cashflow',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Cash Flow
+    </button>
+    <div class="nlbl">Expenses</div>
+    <button class="ni" onclick="nav('operational',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Operational
+    </button>
+    <button class="ni" onclick="nav('transactions',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>All Transactions<span class="nbadge">3</span>
+    </button>
+    <div class="nlbl">Compliance</div>
+    <button class="ni" onclick="nav('tax',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>Tax Filing
+    </button>
+    <div class="nlbl">Accounts</div>
+    <button class="ni" onclick="nav('connect',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Connect Banks
+    </button>
+    <div class="nlbl">Downloads</div>
+    <button class="ni" onclick="nav('exports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export & Download
+    </button>
+  </nav>
+  <div class="saccounts">
+    <div class="sacclbl">Connected Banks</div>
+    <div id="bankChips">
+      <div class="accchip"><div class="accdot" style="background:#3affa0"></div><span class="accname">Mercury</span><span class="accbal">$84.2K</span></div>
+      <div class="accchip"><div class="accdot" style="background:#5ca8ff"></div><span class="accname">Brex</span><span class="accbal">$12.4K</span></div>
+    </div>
+    <button class="addacc" onclick="openBankModal()">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Connect account
+    </button>
+  </div>
+  <div class="sfileinfo">
+    <div class="filepill">
+      <div class="filedot"></div>
+      <span class="filename" id="sfname">Demo data loaded</span>
+      <span class="filesize" id="sfsize">Live</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <div class="topbar">
+    <div class="tbl"><h1 id="ptitle">Dashboard</h1><p id="pdesc">FY 2026 · Know your runway. Always.</p></div>
+    <div class="tbr">
+      <div class="taxalert" id="taxalert" style="display:none">⚠ <span id="taxalerttext">Tax due soon</span></div>
+      <div class="user-pill" id="userPill" onclick="showProfile()"><div class="user-avatar" id="userAvatar">AJ</div><span id="userNamePill">Alex Johnson</span></div><button class="pbtn pout" onclick="nav('exports',document.querySelectorAll('.ni')[9])">↓ Export</button>
+      <button class="pbtn pgrn" onclick="nav('connect',document.querySelectorAll('.ni')[8])">+ Connect bank</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="pb">
+      <div class="aib">
+        <div class="aip"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <span id="aitext" style="font-size:.81rem;color:var(--text3);flex:1">Ask Runvy — <span style="color:var(--green)">"Can I afford to hire?"</span></span>
+        <div class="aic">
+          <button class="aicp" onclick="askAI(this)">Can I hire now?</button>
+          <button class="aicp" onclick="askAI(this)">Best margin quarter?</button>
+          <button class="aicp" onclick="askAI(this)">Extend runway?</button>
+        </div>
+      </div>
+      <div class="rb">
+        <div style="flex:1"><div class="rl">Cash Runway</div><div class="rn" id="db-rn">— <span style="font-size:1rem;color:var(--text2);font-weight:400">months</span></div><div class="rs" id="db-rs">Loading…</div></div>
+        <div style="flex:2"><div class="rt"><div class="rf" id="rrf"></div></div><div class="rm"><span>Now</span><span>3mo</span><span>6mo</span><span>9mo</span><span>12mo</span></div></div>
+        <div style="display:flex;gap:1.5rem;flex-shrink:0">
+          <div class="rstat"><div class="rsv" style="color:var(--green)" id="db-cash">—</div><div class="rsl">Total cash</div></div>
+          <div class="rstat"><div class="rsv" style="color:var(--red)" id="db-burn">—</div><div class="rsl">Burn/mo</div></div>
+        </div>
+      </div>
+      <div class="kg">
+        <div class="kc"><div class="kt"><span class="kl">FY Revenue</span><span class="kb bg" id="db-revb">—</span></div><div class="kv" id="db-rev">—</div><div class="ks" id="db-revs">—</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Gross Profit</span><span class="kb bg" id="db-gpb">—</span></div><div class="kv" id="db-gp">—</div><div class="ks" id="db-gps">—</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Net Income</span><span class="kb bg" id="db-nib">—</span></div><div class="kv" id="db-ni">—</div><div class="ks" id="db-nis">—</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Tax Liability</span><span class="kb ba">FY 2026</span></div><div class="kv" id="db-tax">—</div><div class="ks">Estimated · Auto-filing</div></div>
+      </div>
+      <div class="g31">
+        <div class="card">
+          <div class="ch"><span class="ct">Revenue vs Net Income — Quarterly</span></div>
+          <div class="cw"><div class="cy" id="db-cy"><span>—</span><span>—</span><span>—</span><span>—</span><span>0</span></div><div style="flex:1"><div class="cha" id="db-chart"></div><div class="cl2"><div class="li"><div class="ld" style="background:var(--green)"></div>Revenue</div><div class="li"><div class="ld" style="background:var(--blue)"></div>Net Income</div><div class="li"><div class="ld" style="background:var(--amber)"></div>Tax</div></div></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <div class="ch"><span class="ct">Margins</span></div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-size:.78rem">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Gross margin</span><span id="db-gm" style="color:var(--green);font-weight:500">—</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Net margin</span><span id="db-nm" style="color:var(--green);font-weight:500">—</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">EBITDA margin</span><span id="db-em" style="color:var(--green);font-weight:500">—</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ch"><span class="ct">Closing Cash by Quarter</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:.78rem">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Q1</span><span id="db-q1" style="font-weight:500">—</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Q2</span><span id="db-q2" style="font-weight:500">—</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Q3</span><span id="db-q3" style="font-weight:500">—</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Q4</span><span id="db-q4" style="font-weight:500">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOME STATEMENT -->
+  <div class="page" id="page-income">
+    <div class="pb">
+      <div class="kg">
+        <div class="kc"><div class="kt"><span class="kl">FY Revenue</span><span class="kb bg">Full Year</span></div><div class="kv" id="is-rev">—</div><div class="ks">All streams</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Gross Profit</span><span class="kb bg" id="is-gmb">—</span></div><div class="kv" id="is-gp">—</div><div class="ks">After cost of revenue</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Net Income</span><span class="kb bg" id="is-nmb">—</span></div><div class="kv" id="is-ni">—</div><div class="ks">After all expenses & tax</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Tax Expense</span><span class="kb ba">FY 2026</span></div><div class="kv" id="is-tax">—</div><div class="ks">Estimated liability</div></div>
+      </div>
+      <div class="card mb">
+        <div class="ch"><span class="ct">Income Statement</span><span style="font-size:.68rem;color:var(--text3)">Sourced from your Excel</span></div>
+        <table class="ft"><thead><tr><th class="fl" style="font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Line Item</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q1</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q2</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q3</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q4</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">FY</th></tr></thead><tbody id="is-tbody"></tbody></table>
+      </div>
+      <div class="card"><div class="ch"><span class="ct">Revenue vs Net Income</span></div><div class="cw"><div class="cy" id="is-cy"><span>—</span><span>—</span><span>—</span><span>—</span><span>0</span></div><div style="flex:1"><div class="cha" id="is-chart"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- BALANCE SHEET -->
+  <div class="page" id="page-balance">
+    <div class="pb">
+      <div class="kg">
+        <div class="kc"><div class="kt"><span class="kl">Total Assets</span><span class="kb bg">Q4</span></div><div class="kv" id="bs-assets">—</div><div class="ks">Latest quarter</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Total Liabilities</span><span class="kb br">Q4</span></div><div class="kv" id="bs-liab">—</div><div class="ks">Current liabilities</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Shareholders' Equity</span><span class="kb bg">Q4</span></div><div class="kv" id="bs-eq">—</div><div class="ks">Retained + capital</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Current Ratio</span><span class="kb bb">Liquidity</span></div><div class="kv" id="bs-ratio">—</div><div class="ks">Assets / Liabilities</div></div>
+      </div>
+      <div class="card"><div class="ch"><span class="ct">Balance Sheet</span><span style="font-size:.68rem;color:var(--text3)">Sourced from your Excel</span></div><table class="ft"><thead><tr><th class="fl" style="font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Line Item</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q1</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q2</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q3</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q4 (Est.)</th></tr></thead><tbody id="bs-tbody"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- CASH FLOW -->
+  <div class="page" id="page-cashflow">
+    <div class="pb">
+      <div class="kg">
+        <div class="kc"><div class="kt"><span class="kl">Cash from Operations</span><span class="kb bg">FY</span></div><div class="kv" id="cf-ops">—</div><div class="ks">Operating activities</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Cash from Investing</span><span class="kb br">FY</span></div><div class="kv" id="cf-inv">—</div><div class="ks">CapEx & investments</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Net Change in Cash</span><span class="kb bg">FY</span></div><div class="kv" id="cf-net">—</div><div class="ks">All activities</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Closing Cash</span><span class="kb bg">Q4</span></div><div class="kv" id="cf-cls">—</div><div class="ks">End of year balance</div></div>
+      </div>
+      <div class="card mb"><div class="ch"><span class="ct">Cash Flow Statement</span><span style="font-size:.68rem;color:var(--text3)">Sourced from your Excel</span></div><table class="ft"><thead><tr><th class="fl" style="font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)">Line Item</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q1</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q2</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q3</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">Q4</th><th style="text-align:right;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:7px 9px;border-bottom:1px solid var(--border)">FY</th></tr></thead><tbody id="cf-tbody"></tbody></table></div>
+      <div class="card"><div class="ch"><span class="ct">Quarterly Cash Flow</span></div><div class="cw"><div class="cy" id="cf-cy"><span>—</span><span>—</span><span>—</span><span>—</span><span>0</span></div><div style="flex:1"><div class="cha" id="cf-chart"></div><div class="cl2"><div class="li"><div class="ld" style="background:var(--green)"></div>Operating</div><div class="li"><div class="ld" style="background:var(--red)"></div>Investing</div></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- OPERATIONAL -->
+  <div class="page" id="page-operational">
+    <div class="pb">
+      <div class="kg3">
+        <div class="kc"><div class="kt"><span class="kl">Total Payroll</span><span class="kb bb">FY 2026</span></div><div class="kv" id="op-pay">$45,900</div><div class="ks">82% of operational</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Infrastructure</span><span class="kb bg">Cloud</span></div><div class="kv" id="op-inf">$5,740</div><div class="ks">AWS · Vercel · hosting</div></div>
+        <div class="kc"><div class="kt"><span class="kl">SaaS Tools</span><span class="kb bp">Monthly</span></div><div class="kv" id="op-saas">$642</div><div class="ks">6 tools · $156/mo avg</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><span class="ct">Operational by Category</span></div>
+          <div class="cw"><div class="cy"><span>12K</span><span>9K</span><span>6K</span><span>3K</span><span>0</span></div><div style="flex:1"><div class="cha" id="op-chart"></div><div class="cl2"><div class="li"><div class="ld" style="background:var(--blue)"></div>Payroll</div><div class="li"><div class="ld" style="background:var(--green)"></div>Infra</div><div class="li"><div class="ld" style="background:var(--purple)"></div>SaaS</div></div></div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Top Vendors</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:.78rem">
+            <div style="display:flex;justify-content:space-between"><span>🏢 Gusto Payroll</span><span style="color:var(--red);font-weight:500">$11,200/mo</span></div>
+            <div style="display:flex;justify-content:space-between"><span>☁️ AWS</span><span style="color:var(--red);font-weight:500">$1,240/mo</span></div>
+            <div style="display:flex;justify-content:space-between"><span>📐 Figma</span><span style="color:var(--red);font-weight:500">$75/mo</span></div>
+            <div style="display:flex;justify-content:space-between"><span>📡 Linear</span><span style="color:var(--red);font-weight:500">$49/mo</span></div>
+            <div style="display:flex;justify-content:space-between"><span>📋 Notion</span><span style="color:var(--red);font-weight:500">$32/mo</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ic"><div class="il">Runvy Insight</div><div class="it">Your SaaS stack costs $156/mo across 6 tools. Notion and Linear have overlapping features — consolidating could save ~$80/mo. Payroll is 82% of operational spend, typical for a 2-person team at your stage.</div></div>
+    </div>
+  </div>
+
+  <!-- ALL TRANSACTIONS -->
+  <div class="page" id="page-transactions">
+    <div class="pb">
+      <div class="kg">
+        <div class="kc"><div class="kt"><span class="kl">Total Transactions</span><span class="kb bb">May</span></div><div class="kv">47</div><div class="ks">Across 3 accounts</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Total Inflow</span><span class="kb bg">↑ 18%</span></div><div class="kv">$34,200</div><div class="ks">Revenue payments</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Total Outflow</span><span class="kb br">↑ 4%</span></div><div class="kv">$19,840</div><div class="ks">All categories</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Uncategorized</span><span class="kb ba">Review</span></div><div class="kv">3</div><div class="ks">Needs your input</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:7px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+          <button class="aicp active" style="border-color:rgba(58,255,160,.3);background:var(--green-dim);color:var(--green)" onclick="filterT('all',this)">All (47)</button>
+          <button class="aicp" onclick="filterT('operational',this)">Operational</button>
+          <button class="aicp" onclick="filterT('capital',this)">Capital</button>
+          <button class="aicp" onclick="filterT('revenue',this)">Revenue</button>
+          <button class="aicp" onclick="filterT('tax',this)">Tax</button>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <input type="text" class="finp" style="height:32px;width:160px;font-size:.75rem" placeholder="Search…" oninput="searchT(this.value)">
+            <button class="pbtn pout" style="font-size:.73rem">↓ Export</button>
+          </div>
+        </div>
+        <table class="txn-table"><thead><tr><th>Transaction</th><th>Date</th><th>Account</th><th>Category</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody id="txn-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAX -->
+  <div class="page" id="page-tax">
+    <div class="pb">
+      <div class="kg3">
+        <div class="kc"><div class="kt"><span class="kl">Est. Annual Tax</span><span class="kb ba">FY 2026</span></div><div class="kv" id="tax-ann">—</div><div class="ks">Based on net income</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Q2 Due</span><span class="kb br">Jun 15</span></div><div class="kv" id="tax-q2">—</div><div class="ks">Next payment</div></div>
+        <div class="kc"><div class="kt"><span class="kl">Q1 Paid</span><span class="kb bg">✓ Filed</span></div><div class="kv" id="tax-q1">—</div><div class="ks">Auto-filed on time</div></div>
+      </div>
+      <div class="g2 mb">
+        <div class="card">
+          <div class="ch"><span class="ct">Filing Schedule</span></div>
+          <div id="tax-sched"></div>
+          <div style="display:inline-flex;align-items:center;gap:5px;background:var(--green-dim);color:var(--green);font-size:.63rem;padding:4px 9px;border-radius:6px;margin-top:9px;font-weight:500">✓ Auto-filing enabled · Runvy files on your behalf</div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Tax by Quarter</span></div>
+          <div class="cw"><div class="cy" id="tax-cy"><span>—</span><span>—</span><span>—</span><span>—</span><span>0</span></div><div style="flex:1"><div class="cha" id="tax-chart"></div></div></div>
+        </div>
+      </div>
+      <div class="ic"><div class="il">Runvy Tax Insight</div><div class="it" id="tax-ins">Loading tax insights…</div></div>
+    </div>
+  </div>
+
+  <!-- CONNECT BANKS -->
+  <div class="page" id="page-connect">
+    <div class="cwrap">
+      <div class="chero">
+        <div class="cey">Setup · Bank connections</div>
+        <h2 class="ctitle">Connect your accounts</h2>
+        <p class="csub">Link banks, cards, and payment processors. Every transaction syncs live and updates your dashboard, statements, and tax files automatically.</p>
+      </div>
+      <div class="csteps">
+        <div class="cstep csa" id="cs1"><div class="csnum">1</div><span>Account type</span></div>
+        <div class="csline" id="cl1"></div>
+        <div class="cstep" id="cs2"><div class="csnum">2</div><span>Choose bank</span></div>
+        <div class="csline" id="cl2"></div>
+        <div class="cstep" id="cs3"><div class="csnum">3</div><span>Sign in</span></div>
+        <div class="csline" id="cl3"></div>
+        <div class="cstep" id="cs4"><div class="csnum">4</div><span>Select</span></div>
+        <div class="csline" id="cl4"></div>
+        <div class="cstep" id="cs5"><div class="csnum">5</div><span>Done</span></div>
+      </div>
+      <div class="ccard">
+        <!-- Step 1 -->
+        <div class="cscreen active" id="csc-1">
+          <div class="csh"><h3>What type of account?</h3><p>You can connect multiple types — we guide you through each.</p></div>
+          <div class="tygrid">
+            <div class="tycard" onclick="selType(this,'bank')"><div class="tyico">🏦</div><div class="tyname">Bank Account</div><div class="tydesc">Checking, savings, business accounts</div></div>
+            <div class="tycard" onclick="selType(this,'card')"><div class="tyico">💳</div><div class="tyname">Credit / Debit Card</div><div class="tydesc">Brex, Ramp, Amex business cards</div></div>
+            <div class="tycard" onclick="selType(this,'payment')"><div class="tyico">⚡</div><div class="tyname">Payment Processor</div><div class="tydesc">Stripe, PayPal, Square — sync revenue</div></div>
+          </div>
+          <div class="cbtnrow"><button class="cbpri" id="cbtn1" disabled onclick="goC(2)">Continue →</button></div>
+          <div class="secbar">
+            <div class="secitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>256-bit encryption</div>
+            <div class="secitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l2 2 4-4"/><path d="M12 2L4 7v5c0 5 4 9 8 10 4-1 8-5 8-10V7z"/></svg>Read-only access</div>
+            <div class="secitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Powered by Plaid</div>
+            <div class="secitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>SOC 2 compliant</div>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="cscreen" id="csc-2">
+          <div class="csh"><h3 id="cs2t">Search for your bank</h3><p id="cs2s">We connect to 11,000+ institutions via Plaid</p></div>
+          <div class="cpad">
+            <input class="bsearch" id="bsearch" type="text" placeholder="Search your bank…" oninput="filterB(this.value)">
+            <div class="blist" id="blist"></div>
+            <div id="pgrid-wrap" style="display:none"><div class="pgrid" id="pgrid"></div></div>
+          </div>
+          <div class="cbtnrow"><button class="cbsec" onclick="goC(1)">← Back</button><button class="cbpri" id="cbtn2" disabled onclick="goC(3)">Continue →</button></div>
+        </div>
+        <!-- Step 3 -->
+        <div class="cscreen" id="csc-3">
+          <div class="csh"><h3>Sign in to <span id="authname">your bank</span></h3><p>Your credentials go directly to your bank — Runvy never sees them.</p></div>
+          <div class="cpad" style="max-width:440px">
+            <div style="display:flex;align-items:center;gap:10px;background:var(--surface3);border-radius:10px;padding:10px 13px;margin-bottom:1rem">
+              <div style="width:35px;height:35px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px" id="authlogo">🏦</div>
+              <div><div style="font-size:.85rem;font-weight:500" id="authlabel">Bank</div><div style="font-size:.68rem;color:var(--text2)">Secure OAuth via Plaid</div></div>
+              <div style="margin-left:auto;background:var(--blue-dim);color:var(--blue);font-size:.58rem;padding:2px 7px;border-radius:4px">🔒 Encrypted</div>
+            </div>
+            <div class="fg"><label class="flbl">Username</label><input class="finp" type="text" id="buser" placeholder="Enter username" oninput="chkAuth()"></div>
+            <div class="fg"><label class="flbl">Password</label><input class="finp" type="password" id="bpass" placeholder="Enter password" oninput="chkAuth()"></div>
+            <div class="secnote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><p>Runvy uses Plaid — we never store your credentials. Plaid uses bank-level 256-bit encryption, trusted by 7,000+ apps.</p></div>
+            <div class="mfasec" id="mfasec"><div class="fg"><label class="flbl">Two-factor code</label><input class="finp" type="text" id="mfacode" placeholder="6-digit code" maxlength="6"></div></div>
+          </div>
+          <div class="cbtnrow"><button class="cbsec" onclick="goC(2)">← Back</button><button class="cbpri" id="cbtn3" disabled onclick="simAuth()">Connect securely →</button></div>
+        </div>
+        <!-- Step 4 -->
+        <div class="cscreen" id="csc-4">
+          <div class="csh"><h3>Which accounts to connect?</h3><p>Select all accounts for Runvy to monitor.</p></div>
+          <div class="cpad"><div class="asisec" id="asisec"></div></div>
+          <div class="cbtnrow"><button class="cbsec" onclick="goC(3)">← Back</button><button class="cbpri" id="cbtn4" disabled onclick="startSync()">Connect selected →</button></div>
+        </div>
+        <!-- Step 5 syncing -->
+        <div class="cscreen" id="csc-5">
+          <div class="syncctr">
+            <div class="sico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3affa0" stroke-width="1.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div>
+            <h3 class="stitle">Connecting to your bank…</h3>
+            <p class="ssub">Establishing secure connection</p>
+            <div style="width:100%;max-width:320px;margin:0 auto"><div class="strack"><div class="sfill" id="sfill"></div></div><div class="slbl" id="slbl">Authenticating…</div></div>
+            <div class="srows">
+              <div class="srow sra" id="sr1"><div class="sdot"></div>Verifying credentials with bank</div>
+              <div class="srow" id="sr2"><div class="sdot"></div>Fetching account details</div>
+              <div class="srow" id="sr3"><div class="sdot"></div>Importing 90 days of transactions</div>
+              <div class="srow" id="sr4"><div class="sdot"></div>AI categorizing expenses</div>
+              <div class="srow" id="sr5"><div class="sdot"></div>Computing runway & cash flow</div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 6 success -->
+        <div class="cscreen" id="csc-6">
+          <div class="succ">
+            <div class="sucico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3affa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+            <h3 class="suctitle">Accounts connected!</h3>
+            <p class="sucsub">Live — Runvy is already analyzing your numbers.</p>
+            <div class="totbar">
+              <div><div class="totlbl">Total balance</div><div class="totval" id="stotval">—</div><div class="totsub" id="stotsub">—</div></div>
+              <div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:600;color:var(--red)" id="sburnval">—</div><div style="font-size:.62rem;color:var(--text3)">Monthly burn</div><div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:600;color:var(--green);margin-top:5px" id="srunval">—</div><div style="font-size:.62rem;color:var(--text3)">Runway</div></div>
+            </div>
+            <div id="succonn"></div>
+            <div class="nsgrid">
+              <div class="nsc"><div class="nsico">📊</div><div class="nstitle">View dashboard</div><div class="nsdesc">Your live financial data is ready.</div></div>
+              <div class="nsc"><div class="nsico">🤖</div><div class="nstitle">Ask Runvy</div><div class="nsdesc">"Can I afford to hire?" — get instant insight.</div></div>
+            </div>
+            <div style="display:flex;gap:9px">
+              <button class="cbsec" onclick="resetConn()">+ Connect another</button>
+              <button class="cbpri" onclick="nav('dashboard',document.querySelector('.ni'))">Go to dashboard →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORTS -->
+  <div class="page" id="page-exports">
+    <div class="pb">
+      <div style="display:flex;align-items:center;gap:9px;background:var(--green-dim);border:1px solid rgba(58,255,160,.15);border-radius:11px;padding:11px 15px;margin-bottom:1.5rem">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span style="font-size:.8rem;color:var(--text2)">All files are <strong style="color:var(--green)">generated from your Excel data</strong> — numbers reflect exactly what's in your spreadsheet</span>
+      </div>
+      <!-- Financial Statements -->
+      <div class="card mb">
+        <div class="ch"><div><div class="ct">Financial Statements Package</div><div style="font-size:.7rem;color:var(--text2);margin-top:3px">Income Statement · Balance Sheet · Cash Flow · FY 2026</div></div><span class="kb bg">Ready</span></div>
+        <div class="g2" style="margin-bottom:1rem">
+          <div class="dlcard">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div class="dlico" style="background:var(--red-dim)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div><div style="font-size:.8rem;font-weight:500">PDF — Shareable Report</div><div style="font-size:.65rem;color:var(--text3);margin-top:1px">All 3 statements · Notes · Print-ready</div></div>
+            </div>
+            <div style="font-size:.7rem;color:var(--text3)">Best for: investors, accountants, board meetings</div>
+            <button onclick="dlFile('CFO_AI_Financial_Statements.pdf','dl-fin-pdf')" class="pbtn pgrn" style="width:100%;text-align:center;padding:9px;font-size:.78rem" id="dl-fin-pdf">↓ Download Financial PDF</button>
+          </div>
+          <div class="dlcard">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div class="dlico" style="background:var(--green-dim)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+              <div><div style="font-size:.8rem;font-weight:500">Excel — Live Spreadsheet</div><div style="font-size:.65rem;color:var(--text3);margin-top:1px">4 tabs · 160 live formulas · Color-coded</div></div>
+            </div>
+            <div style="font-size:.7rem;color:var(--text3)">Best for: editing, modeling, Google Sheets</div>
+            <button onclick="dlFile('CFO_AI_Financial_Statements.xlsx','dl-xl')" class="pbtn pgrn" style="width:100%;text-align:center;padding:9px;font-size:.78rem" id="dl-xl">↓ Download Excel</button>
+          </div>
+        </div>
+        <div style="background:var(--surface3);border-radius:9px;padding:.9rem">
+          <div style="font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:7px">Included in this package</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+            <div style="font-size:.76rem"><div style="color:var(--green);font-weight:500;margin-bottom:3px">Income Statement</div><div style="color:var(--text3);font-size:.68rem;line-height:1.5">Revenue · COGS · Gross profit · EBITDA · Net income · Q1–Q4 + FY</div></div>
+            <div style="font-size:.76rem"><div style="color:var(--blue);font-weight:500;margin-bottom:3px">Balance Sheet</div><div style="color:var(--text3);font-size:.68rem;line-height:1.5">Current assets · PP&E · Liabilities · Shareholders' equity</div></div>
+            <div style="font-size:.76rem"><div style="color:var(--purple);font-weight:500;margin-bottom:3px">Cash Flow</div><div style="color:var(--text3);font-size:.68rem;line-height:1.5">Operating · Investing · Financing · Opening & closing balances</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Tax File -->
+      <div class="card mb">
+        <div class="ch"><div><div class="ct">Tax Summary Report</div><div style="font-size:.7rem;color:var(--text2);margin-top:3px">Filing schedule · Deductions · Auto-filing status · FY 2026</div></div><span class="kb ba">Q2 due Jun 15</span></div>
+        <div class="g2">
+          <div class="dlcard">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div class="dlico" style="background:var(--amber-dim)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 14l2 2 4-4"/></svg></div>
+              <div><div style="font-size:.8rem;font-weight:500">PDF — Tax Summary</div><div style="font-size:.65rem;color:var(--text3);margin-top:1px">Share with your CPA · Filing-ready format</div></div>
+            </div>
+            <div style="font-size:.7rem;color:var(--text3)">Best for: your accountant, IRS prep, tax planning</div>
+            <button onclick="dlFile('CFO_AI_Tax_Summary_2026.pdf','dl-tax-pdf')" class="pbtn" style="width:100%;text-align:center;padding:9px;font-size:.78rem;background:var(--amber);border:none;color:#0b0f0e;font-weight:500;border-radius:8px;cursor:pointer" id="dl-tax-pdf">↓ Download Tax PDF</button>
+          </div>
+          <div class="dlcard">
+            <div style="font-size:.78rem;font-weight:500;margin-bottom:8px;color:var(--text)">What's inside the Tax PDF</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:.7rem;color:var(--text3)">
+              <div>✓ Filing schedule — all 7 deadlines 2026–27</div>
+              <div>✓ Q1–Q4 income & tax calculation</div>
+              <div>✓ Tax savings tracker (gap alert)</div>
+              <div>✓ 7 deduction opportunities (~$7,843)</div>
+              <div>✓ Auto-filing confirmation status</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Upload new -->
+      <div class="card">
+        <div class="ch"><span class="ct">Update your data</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px;padding:.9rem;background:var(--surface3);border-radius:9px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            <div style="flex:1"><div style="font-size:.8rem;font-weight:500">Re-upload Excel</div><div style="font-size:.68rem;color:var(--text3);margin-top:1px">Upload updated file to refresh all pages</div></div>
+            <button onclick="resetUpload()" class="pbtn pgrn" style="font-size:.75rem">↑ Upload</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:.9rem;background:var(--surface3);border-radius:9px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            <div style="flex:1"><div style="font-size:.8rem;font-weight:500">Connect bank account</div><div style="font-size:.68rem;color:var(--text3);margin-top:1px">Auto-sync transactions via Plaid</div></div>
+            <button onclick="nav('connect',document.querySelectorAll('.ni')[8])" class="pbtn pout" style="font-size:.75rem">Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── DATA STATE ──
+let XL = {};
+let connectedAccs = [];
+let selType2 = null, selBank = null, selAccs = new Set();
+
+// ── DRAG DROP ──
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+
+// ── FILE HANDLER ──
+function handleFile(file) {
+  const bar=document.getElementById('lbar'),fill=document.getElementById('lfill'),lbl=document.getElementById('llbl');
+  bar.style.display='block';lbl.style.display='block';
+  const steps=['Reading file…','Parsing sheets…','Extracting financials…','Building charts…','Almost ready…'];
+  let pct=0,step=0;
+  const tick=setInterval(()=>{pct=Math.min(pct+18,95);fill.style.width=pct+'%';lbl.textContent=steps[step]||'Loading…';step++;},300);
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      XL=parseWB(wb);clearInterval(tick);fill.style.width='100%';lbl.textContent='✓ Loaded!';
+      setTimeout(()=>{
+        document.getElementById('uploadScreen').classList.add('hidden');
+        document.getElementById('sfname').textContent=file.name;
+        document.getElementById('sfsize').textContent=(file.size/1024).toFixed(0)+'KB';
+        populateAll();
+      },500);
+    }catch(err){clearInterval(tick);lbl.style.color='var(--red)';lbl.textContent='⚠ Could not parse. Try demo instead.';fill.style.background='var(--red)';fill.style.width='100%';}
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── PARSE ──
+function parseWB(wb){
+  const d={};
+  wb.SheetNames.forEach(n=>{d[n]=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null})});
+  function fr(sh,lbl){return(d[sh]||[]).find(r=>r[0]&&String(r[0]).toLowerCase().includes(lbl.toLowerCase()));}
+  function v(row,col=1){return row?(typeof row[col]==='number'?row[col]:0):0;}
+  const IS='Income Statement',CF='Cash Flow Statement',BS='Balance Sheet',DB='Dashboard';
+  const rev=fr(IS,'TOTAL REVENUE'),cogs=fr(IS,'TOTAL COST OF REVENUE'),gp=fr(IS,'GROSS PROFIT');
+  const opex=fr(IS,'TOTAL OPERATING EXPENSES'),ni=fr(IS,'NET INCOME'),tax=fr(IS,'Income Tax');
+  const cfo=fr(CF,'NET CASH FROM OPERATIONS'),cfi=fr(CF,'NET CASH FROM INVESTING');
+  const cls=fr(CF,'CLOSING CASH');
+  const cash=fr(BS,'Cash & Cash Equiv'),tca=fr(BS,'TOTAL CURRENT ASSETS'),ta=fr(BS,'TOTAL ASSETS');
+  const tcl=fr(BS,'TOTAL CURRENT LIABILITIES'),tl=fr(BS,'TOTAL LIABILITIES'),eq=fr(BS,"TOTAL SHAREHOLDERS");
+  const burn=fr(DB,'Monthly Burn'),run=fr(DB,'Estimated Runway');
+  return{
+    is:{fy:{rev:v(rev,5),cogs:v(cogs,5),gp:v(gp,5),opex:v(opex,5),ni:v(ni,5),tax:v(tax,5)},
+        q:{rev:[v(rev,1),v(rev,2),v(rev,3),v(rev,4)],ni:[v(ni,1),v(ni,2),v(ni,3),v(ni,4)],
+           tax:[v(tax,1),v(tax,2),v(tax,3),v(tax,4)],gp:[v(gp,1),v(gp,2),v(gp,3),v(gp,4)]},
+        rows:d[IS]||[]},
+    cf:{fy:{cfo:v(cfo,5),cfi:v(cfi,5),net:v(cfo,5)+v(cfi,5),cls:v(cls,4)},
+        q:{cfo:[v(cfo,1),v(cfo,2),v(cfo,3),v(cfo,4)],cfi:[v(cfi,1),v(cfi,2),v(cfi,3),v(cfi,4)]},
+        rows:d[CF]||[]},
+    bs:{l:{ta:v(ta,4),tl:v(tl,4),eq:v(eq,4),tca:v(tca,4),tcl:v(tcl,4)},rows:d[BS]||[]},
+    db:{burn:[v(burn,1),v(burn,2),v(burn,3),v(burn,4)],
+        run:[v(run,1),v(run,2),v(run,3),v(run,4)],
+        cash:[v(cash,1),v(cash,2),v(cash,3),v(cash,4)]}
+  };
+}
+
+// ── FORMAT ──
+const $f=v=>v==null||v===0?'—':'$'+Math.abs(v).toLocaleString();
+const pf=v=>v==null||v===0?'—':(v*100).toFixed(1)+'%';
+const mf=v=>v==null||v===0?'—':parseFloat(v).toFixed(1)+' mo';
+
+// ── POPULATE ALL ──
+function populateAll(){buildDB();buildIS();buildBS();buildCF();buildTax();buildTxns();buildOpChart();}
+
+// ── DASHBOARD ──
+function buildDB(){
+  const d=XL,fy=d.is.fy,q=d.is.q,db=d.db;
+  const run=db.run[2]||db.run[1]||db.run[0]||6.4;
+  const cash=db.cash[3]||db.cash[2]||127600;
+  const burn=db.burn[2]||db.burn[1]||19840;
+  document.getElementById('db-rn').innerHTML=mf(run).replace(' mo','')+'<span style="font-size:1rem;color:var(--text2);font-weight:400"> months</span>';
+  document.getElementById('db-rs').textContent=`$${(burn/1000).toFixed(1)}K/mo burn · live from your Excel`;
+  document.getElementById('db-cash').textContent=$f(cash);
+  document.getElementById('db-burn').textContent=$f(burn);
+  setTimeout(()=>{document.getElementById('rrf').style.width=Math.min((run/12)*100,100)+'%';},300);
+  document.getElementById('db-rev').textContent=$f(fy.rev);
+  document.getElementById('db-gp').textContent=$f(fy.gp);
+  document.getElementById('db-ni').textContent=$f(fy.ni);
+  document.getElementById('db-tax').textContent=$f(fy.tax);
+  const gm=fy.rev?fy.gp/fy.rev:0,nm=fy.rev?fy.ni/fy.rev:0,em=fy.rev?(fy.rev-fy.cogs-fy.opex)/fy.rev:0;
+  document.getElementById('db-gm').textContent=pf(gm);
+  document.getElementById('db-nm').textContent=pf(nm);
+  document.getElementById('db-em').textContent=pf(em);
+  document.getElementById('db-revb').textContent='FY 2026';
+  document.getElementById('db-gpb').textContent=pf(gm)+' margin';
+  document.getElementById('db-nib').textContent=pf(nm)+' margin';
+  document.getElementById('db-revs').textContent='Q4 best: '+$f(q.rev[3]);
+  document.getElementById('db-gps').textContent='COGS: '+$f(fy.cogs);
+  document.getElementById('db-nis').textContent='After '+$f(fy.tax)+' tax';
+  const cas=db.cash;
+  ['db-q1','db-q2','db-q3','db-q4'].forEach((id,i)=>{document.getElementById(id).textContent=$f(cas[i]);});
+  if(d.is.q.tax[1]){document.getElementById('taxalert').style.display='flex';document.getElementById('taxalerttext').textContent=`Q2 tax ${$f(d.is.q.tax[1])} due Jun 15`;}
+  document.getElementById('pdesc').textContent='FY 2026 · Sourced from your Excel · '+new Date().toLocaleDateString();
+  chart('db-chart','db-cy',[{data:q.rev,c:'var(--green)'},{data:q.ni,c:'var(--blue)'},{data:q.tax,c:'var(--amber)'}],Math.max(...q.rev));
+}
+
+// ── INCOME STATEMENT ──
+function buildIS(){
+  const fy=XL.is.fy,q=XL.is.q;
+  document.getElementById('is-rev').textContent=$f(fy.rev);
+  document.getElementById('is-gp').textContent=$f(fy.gp);
+  document.getElementById('is-ni').textContent=$f(fy.ni);
+  document.getElementById('is-tax').textContent=$f(fy.tax);
+  document.getElementById('is-gmb').textContent=pf(fy.rev?fy.gp/fy.rev:0)+' margin';
+  document.getElementById('is-nmb').textContent=pf(fy.rev?fy.ni/fy.rev:0)+' margin';
+  const tbody=document.getElementById('is-tbody');tbody.innerHTML='';
+  const skip=['Runvy','Fiscal Year','Revenue growth','%'];
+  const tots=['TOTAL REVENUE','TOTAL COST','GROSS PROFIT','TOTAL OPERATING','OPERATING INCOME','NET INCOME'];
+  const secs=['REVENUE','COST OF REVENUE','OPERATING EXPENSES'];
+  XL.is.rows.forEach(row=>{
+    if(!row[0])return;const lbl=String(row[0]).trim();
+    if(skip.some(s=>lbl.includes(s)))return;
+    const isSec=secs.some(s=>lbl.toUpperCase()===s);
+    const isTot=tots.some(s=>lbl.toUpperCase().includes(s));
+    const vals=[row[1],row[2],row[3],row[4],row[5]];
+    if(!vals.some(v=>typeof v==='number')&&!isSec&&!isTot&&lbl.length<4)return;
+    const tr=document.createElement('tr');
+    if(isSec){tr.innerHTML=`<td colspan="6" class="fsec">${lbl}</td>`;}
+    else{
+      const ind=lbl.startsWith('    ')||lbl.startsWith('  ');
+      const wt=isTot?'font-weight:600;border-top:1px solid var(--border);background:var(--green-dim)':'';
+      const col=isTot?'color:var(--green)':'';
+      tr.innerHTML=`<td class="fl" style="${wt};${ind?'padding-left:20px':''}">${lbl.replace(/^\s+/,'')}</td>`+vals.map(v=>`<td class="fv" style="${wt};${col}">${typeof v==='number'?$f(v):(v||'—')}</td>`).join('');
+    }
+    tbody.appendChild(tr);
+  });
+  chart('is-chart','is-cy',[{data:q.rev,c:'var(--green)'},{data:q.ni,c:'var(--blue)'}],Math.max(...q.rev));
+}
+
+// ── BALANCE SHEET ──
+function buildBS(){
+  const l=XL.bs.l;
+  document.getElementById('bs-assets').textContent=$f(l.ta);
+  document.getElementById('bs-liab').textContent=$f(l.tl);
+  document.getElementById('bs-eq').textContent=$f(l.eq);
+  document.getElementById('bs-ratio').textContent=l.tcl?(l.tca/l.tcl).toFixed(2)+'x':'—';
+  const tbody=document.getElementById('bs-tbody');tbody.innerHTML='';
+  const skip=['Runvy','As of Quarter'];
+  const tots=['TOTAL CURRENT ASSETS','TOTAL NON-CURRENT','TOTAL ASSETS','TOTAL CURRENT LIAB','TOTAL LIABILITIES','TOTAL SHAREHOLDERS'];
+  const secs=['ASSETS','LIABILITIES','Current Assets','Non-Current',"LIABILITIES & SHAREHOLDERS"];
+  XL.bs.rows.forEach(row=>{
+    if(!row[0])return;const lbl=String(row[0]).trim();
+    if(skip.some(s=>lbl.includes(s)))return;
+    const isSec=secs.some(s=>lbl.includes(s.trim()));
+    const isTot=tots.some(s=>lbl.toUpperCase().includes(s));
+    const vals=[row[1],row[2],row[3],row[4]];
+    if(!vals.some(v=>typeof v==='number')&&!isSec&&!isTot&&lbl.length<4)return;
+    const tr=document.createElement('tr');
+    if(isSec){tr.innerHTML=`<td colspan="5" class="fsec">${lbl.replace(/^\s+/,'')}</td>`;}
+    else{
+      const ind=lbl.startsWith('    ')||lbl.startsWith('  ');
+      const wt=isTot?'font-weight:600;border-top:1px solid var(--border);background:var(--green-dim)':'';
+      const col=isTot?'color:var(--green)':'';
+      tr.innerHTML=`<td class="fl" style="${wt};${ind?'padding-left:20px':''}">${lbl.replace(/^\s+/,'')}</td>`+vals.map(v=>`<td class="fv" style="${wt};${col}">${typeof v==='number'?$f(v):(v||'—')}</td>`).join('');
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+// ── CASH FLOW ──
+function buildCF(){
+  const cf=XL.cf;
+  document.getElementById('cf-ops').textContent=$f(cf.fy.cfo);
+  document.getElementById('cf-inv').textContent=$f(cf.fy.cfi);
+  document.getElementById('cf-net').textContent=$f(cf.fy.net);
+  document.getElementById('cf-cls').textContent=$f(cf.fy.cls);
+  const tbody=document.getElementById('cf-tbody');tbody.innerHTML='';
+  const skip=['Runvy','Fiscal Year','Adjustments'];
+  const tots=['NET CASH FROM OPERATIONS','NET CASH FROM INVESTING','NET CASH FROM FINANCING','NET CHANGE','CLOSING CASH'];
+  const secs=['OPERATING ACTIVITIES','INVESTING ACTIVITIES','FINANCING ACTIVITIES'];
+  XL.cf.rows.forEach(row=>{
+    if(!row[0])return;const lbl=String(row[0]).trim();
+    if(skip.some(s=>lbl.includes(s)))return;
+    const isSec=secs.some(s=>lbl.toUpperCase().includes(s));
+    const isTot=tots.some(s=>lbl.toUpperCase().includes(s));
+    const vals=[row[1],row[2],row[3],row[4],row[5]];
+    if(!vals.some(v=>typeof v==='number')&&!isSec&&!isTot&&lbl.length<4)return;
+    const tr=document.createElement('tr');
+    if(isSec){tr.innerHTML=`<td colspan="6" class="fsec">${lbl}</td>`;}
+    else{
+      const ind=lbl.startsWith('    ')||lbl.startsWith('  ');
+      const wt=isTot?'font-weight:600;border-top:1px solid var(--border);background:var(--green-dim)':'';
+      const col=isTot?'color:var(--green)':'';
+      tr.innerHTML=`<td class="fl" style="${wt};${ind?'padding-left:20px':''}">${lbl.replace(/^\s+/,'')}</td>`+vals.map(v=>`<td class="fv" style="${wt};${col}">${typeof v==='number'?$f(v):(v||'—')}</td>`).join('');
+    }
+    tbody.appendChild(tr);
+  });
+  chart('cf-chart','cf-cy',[{data:cf.q.cfo,c:'var(--green)'},{data:cf.q.cfi.map(Math.abs),c:'var(--red)'}],Math.max(...cf.q.cfo));
+}
+
+// ── TAX ──
+function buildTax(){
+  const tax=XL.is.q.tax,fy=XL.is.fy;
+  document.getElementById('tax-ann').textContent=$f(fy.tax);
+  document.getElementById('tax-q2').textContent=$f(tax[1]);
+  document.getElementById('tax-q1').textContent=$f(tax[0]);
+  const sched=[
+    {name:'Q1 Estimated Tax',date:'Apr 15, 2026',amt:tax[0],status:'✓ Paid',sc:'var(--green)'},
+    {name:'Q2 Estimated Tax',date:'Jun 15, 2026',amt:tax[1],status:'⚠ Due Soon',sc:'var(--amber)'},
+    {name:'Q3 Estimated Tax',date:'Sep 15, 2026',amt:tax[2],status:'Upcoming',sc:'var(--text3)'},
+    {name:'Q4 Estimated Tax',date:'Jan 15, 2027',amt:tax[3],status:'Upcoming',sc:'var(--text3)'},
+  ];
+  document.getElementById('tax-sched').innerHTML=sched.map(s=>`<div class="taxitem"><div style="width:8px;height:8px;border-radius:50%;background:${s.sc};flex-shrink:0"></div><div style="flex:1"><div style="font-size:.81rem;font-weight:500">${s.name}</div><div style="font-size:.65rem;color:var(--text3)">${s.date}</div></div><div style="font-size:.78rem;font-weight:500;color:${s.sc}">${$f(s.amt)}</div><div style="font-size:.65rem;color:${s.sc};margin-left:7px">${s.status}</div></div>`).join('');
+  const effR=fy.ni?(fy.tax/fy.ni*100).toFixed(1):'—';
+  document.getElementById('tax-ins').textContent=`Estimated FY tax: ${$f(fy.tax)} on net income of ${$f(fy.ni)} (eff. rate ~${effR}%). Q2 payment of ${$f(tax[1])} due June 15. Consider Section 179 deductions on equipment to reduce taxable income before year-end.`;
+  chart('tax-chart','tax-cy',[{data:tax,c:'var(--amber)'}],Math.max(...tax)*1.3);
+}
+
+// ── OPERATIONAL CHART ──
+function buildOpChart(){
+  const payD=[9000,9500,9500,10500,10500,11200,11200];
+  const infD=[800,900,850,1000,1100,1240,1240];
+  const saasD=[140,140,140,140,140,156,156];
+  const c=document.getElementById('op-chart');if(!c)return;c.innerHTML='';
+  const lbls=['N','D','J','F','M','A','M'];
+  lbls.forEach((_,i)=>{
+    const col=document.createElement('div');col.className='bc';
+    [[payD,'var(--blue)'],[infD,'var(--green)'],[saasD,'var(--purple)']].forEach(([dat,color])=>{
+      const b=document.createElement('div');b.className='bs2';b.style.background=color;b.style.height='0px';col.appendChild(b);
+      setTimeout(()=>{b.style.height=Math.round((dat[i]/13000)*175)+'px';},150);
+    });
+    const l=document.createElement('div');l.className='bl';l.textContent=lbls[i];col.appendChild(l);c.appendChild(col);
+  });
+}
+
+// ── TRANSACTIONS ──
+const txns=[
+  {ico:'🖥',name:'AWS Infrastructure',date:'May 19',acc:'Mercury',cat:'operational',tag:'Operational',tc:'top',amt:-1240},
+  {ico:'💳',name:'Stripe payment',date:'May 19',acc:'Brex',cat:'revenue',tag:'Revenue',tc:'tre',amt:4500},
+  {ico:'📋',name:'IRS — Q1 tax',date:'May 18',acc:'Mercury',cat:'tax',tag:'Tax',tc:'tta',amt:-3850},
+  {ico:'👥',name:'Gusto — Payroll',date:'May 15',acc:'SVB',cat:'operational',tag:'Operational',tc:'top',amt:-11200},
+  {ico:'🔧',name:'MacBook Pro M3',date:'May 14',acc:'Brex',cat:'capital',tag:'Capital',tc:'tca',amt:-2399},
+  {ico:'📊',name:'Notion + Linear',date:'May 13',acc:'Brex',cat:'operational',tag:'Operational',tc:'top',amt:-156},
+  {ico:'💳',name:'Stripe payment',date:'May 12',acc:'Mercury',cat:'revenue',tag:'Revenue',tc:'tre',amt:8200},
+  {ico:'☁️',name:'Vercel hosting',date:'May 11',acc:'Brex',cat:'operational',tag:'Operational',tc:'top',amt:-40},
+  {ico:'🖨',name:'Brother Printer',date:'May 10',acc:'Brex',cat:'capital',tag:'Capital',tc:'tca',amt:-349},
+  {ico:'💳',name:'Stripe payment',date:'May 9',acc:'Mercury',cat:'revenue',tag:'Revenue',tc:'tre',amt:21500},
+];
+let txnFilt='all',txnSrch='';
+function buildTxns(){renderTxns();}
+function filterT(f,btn){txnFilt=f;document.querySelectorAll('.aic button').forEach(b=>b.style.cssText='');btn.style.borderColor='rgba(58,255,160,.3)';btn.style.background='var(--green-dim)';btn.style.color='var(--green)';renderTxns();}
+function searchT(v){txnSrch=v.toLowerCase();renderTxns();}
+function renderTxns(){
+  const body=document.getElementById('txn-tbody');if(!body)return;
+  const filt=txns.filter(t=>(txnFilt==='all'||t.cat===txnFilt)&&(!txnSrch||t.name.toLowerCase().includes(txnSrch)));
+  body.innerHTML=filt.map(t=>`<tr><td><div style="display:flex;align-items:center;gap:9px"><div style="width:28px;height:28px;border-radius:6px;background:${t.amt>0?'var(--green-dim)':'var(--surface3)'};display:flex;align-items:center;justify-content:center;font-size:12px">${t.ico}</div><div><div style="font-weight:500;font-size:.8rem">${t.name}</div></div></div></td><td style="font-size:.75rem;color:var(--text2)">${t.date}</td><td style="font-size:.75rem;color:var(--text2)">${t.acc}</td><td><span class="ttag ${t.tc}">${t.tag}</span></td><td class="${t.amt>0?'amc':'amd'}">${t.amt>0?'+':'−'}$${Math.abs(t.amt).toLocaleString()}</td><td style="font-size:.7rem"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px"></span>Cleared</td></tr>`).join('');
+}
+
+// ── CHART ──
+function chart(cid,yid,datasets,maxV){
+  const c=document.getElementById(cid);if(!c)return;c.innerHTML='';
+  const step=Math.ceil(maxV/4/5000)*5000||1000;
+  const yel=document.getElementById(yid);
+  if(yel){yel.innerHTML='';for(let i=4;i>=0;i--){const d=document.createElement('span');d.textContent=i===0?'0':(i*step>=1000?(i*step/1000).toFixed(0)+'K':i*step);yel.appendChild(d);}}
+  ['Q1','Q2','Q3','Q4'].forEach((_,i)=>{
+    const col=document.createElement('div');col.className='bc';
+    datasets.forEach(ds=>{
+      const b=document.createElement('div');b.className='bs2';b.style.background=ds.c;b.style.height='0px';col.appendChild(b);
+      setTimeout(()=>{b.style.height=Math.max(Math.round(((ds.data[i]||0)/(step*4))*175),2)+'px';},150);
+    });
+    const l=document.createElement('div');l.className='bl';l.textContent=['Q1','Q2','Q3','Q4'][i];col.appendChild(l);c.appendChild(col);
+  });
+}
+
+// ── AI BAR ──
+function askAI(btn){
+  const el=document.getElementById('aitext'),q=btn.textContent;
+  const fy=XL.is?XL.is.fy:{},db=XL.db||{};
+  const run=db.run?db.run[2]:6.4,cash=db.cash?db.cash[3]:127600,burn=db.burn?db.burn[2]:19840;
+  const answers={'Can I hire now?':`✓ With ${$f(cash)} cash and ${$f(burn)}/mo burn, you have ~${mf(run)} runway. A $6K/mo hire reduces runway to ~${mf((run||6.4)-1.2)} — manageable if revenue holds.`,'Best margin quarter?':`Q4 is your best — net margin ${pf(fy.rev?fy.ni/fy.rev:0.39)} on ${$f(fy.rev?fy.rev/4:46700)} revenue. Revenue grew every quarter while burn stayed flat.`,'Extend runway?':`Cut $156/mo SaaS tools (+0.2mo). Delay next equipment purchase (+0.5mo). Together: ${mf((run||6.4)+0.7)} total runway.`};
+  el.innerHTML=`<span style="color:var(--text2)">Thinking…</span>`;
+  setTimeout(()=>{el.innerHTML=`<span style="color:var(--green)">${answers[q]||'Based on your data: '+q}</span>`;setTimeout(()=>{el.innerHTML='Ask Runvy — <span style="color:var(--green)">"Can I afford to hire?"</span>';},6000);},900);
+}
+
+// ── NAV ──
+const meta={dashboard:{t:'Dashboard',d:'FY 2026 · Know your runway. Always.'},income:{t:'Income Statement',d:'Revenue · Expenses · Profit · FY 2026'},balance:{t:'Balance Sheet',d:'Assets · Liabilities · Equity · FY 2026'},cashflow:{t:'Cash Flow Statement',d:'Operating · Investing · Financing · FY 2026'},operational:{t:'Operational Expenses',d:'Payroll · Infrastructure · SaaS · FY 2026'},transactions:{t:'All Transactions',d:'May 2026 · All accounts combined'},tax:{t:'Tax Filing',d:'Deadlines · Estimates · Auto-filing · FY 2026'},connect:{t:'Connect Bank Accounts',d:'Link banks, cards & payment processors'},exports:{t:'Export & Download',d:'Financial PDF · Tax PDF · Excel · Google Sheets'}};
+function nav(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(btn&&btn.classList)btn.classList.add('active');
+  const m=meta[id]||{t:id,d:''};
+  document.getElementById('ptitle').textContent=m.t;
+  document.getElementById('pdesc').textContent=m.d;
+  if(id==='connect')resetConn();
+}
+
+// ── DOWNLOAD ──
+function dlFile(fname,btnid){
+  const btn=document.getElementById(btnid);const orig=btn.textContent;
+  btn.textContent='Preparing…';btn.disabled=true;
+  setTimeout(()=>{btn.textContent='✓ Downloaded!';setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2500);},1100);
+}
+
+// ── CONNECT BANK ──
+const banks=[
+  {ico:'🏦',name:'Bank of America',type:'Business & Personal',bg:'#e3183722'},
+  {ico:'🏛',name:'Chase',type:'Business & Personal',bg:'#117aba22'},
+  {ico:'💚',name:'Mercury',type:'Startup Banking',bg:'#5effb122'},
+  {ico:'🔵',name:'Wells Fargo',type:'Business & Personal',bg:'#cc000022'},
+  {ico:'⚡',name:'Brex',type:'Corporate Card',bg:'#7c5cfc22'},
+  {ico:'🌿',name:'SVB',type:'Startup Banking',bg:'#00a65122'},
+  {ico:'💎',name:'Ramp',type:'Corporate Card',bg:'#ff6b3522'},
+  {ico:'🔶',name:'Relay',type:'Business Banking',bg:'#f5a62322'},
+  {ico:'🏢',name:'Citibank',type:'Business & Personal',bg:'#003b8e22'},
+  {ico:'🟠',name:'Capital One',type:'Business & Personal',bg:'#d0302722'},
+];
+const pays=[{ico:'💳',name:'Stripe',desc:'Payment processing'},{ico:'🅿️',name:'PayPal',desc:'Business payments'},{ico:'⬛',name:'Square',desc:'POS & online'},{ico:'🛍',name:'Shopify Payments',desc:'E-commerce'},{ico:'📦',name:'Amazon Pay',desc:'Marketplace'},{ico:'🔁',name:'Wise',desc:'International'}];
+const mockA={Mercury:[{ico:'💼',name:'Mercury Business Checking',num:'••••4821',bal:'$84,200',br:84200},{ico:'💰',name:'Mercury Savings',num:'••••9340',bal:'$12,400',br:12400}],Brex:[{ico:'💳',name:'Brex Corporate Card',num:'••••7721',bal:'$12,400',br:12400}],Chase:[{ico:'💼',name:'Chase Business Checking',num:'••••3310',bal:'$45,000',br:45000},{ico:'💳',name:'Chase Ink Business',num:'••••8820',bal:'$3,200',br:3200}],Stripe:[{ico:'⚡',name:'Stripe Balance',num:'acct_••••',bal:'$8,740',br:8740}],default:[{ico:'🏦',name:'Business Checking',num:'••••1234',bal:'$50,000',br:50000}]};
+
+function selType(el,t){selType2=t;document.querySelectorAll('.tycard').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');document.getElementById('cbtn1').disabled=false;}
+function filterB(v){
+  if(selType2==='payment')return;
+  const filt=banks.filter(b=>b.name.toLowerCase().includes(v.toLowerCase()));
+  document.getElementById('blist').innerHTML=filt.map(b=>`<div class="bitem ${selBank===b.name?'sel':''}" onclick="selB('${b.name}','${b.ico}',this)"><div class="blogo" style="background:${b.bg}">${b.ico}</div><div style="flex:1"><div class="bname">${b.name}</div><div class="btype">${b.type}</div></div><div class="bchk"><svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0b0f0e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`).join('');
+}
+function selB(name,ico,el){
+  selBank=name;document.querySelectorAll('.bitem,.pcard').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');
+  document.getElementById('cbtn2').disabled=false;
+  document.getElementById('authname').textContent=name;document.getElementById('authlabel').textContent=name;document.getElementById('authlogo').textContent=ico;
+}
+function chkAuth(){
+  const u=document.getElementById('buser').value,p=document.getElementById('bpass').value;
+  if(u.length>2&&p.length>2){document.getElementById('cbtn3').disabled=false;setTimeout(()=>{document.getElementById('mfasec').style.display='block';},700);}
+}
+function buildAccList(){
+  selAccs=new Set();const accs=mockA[selBank]||mockA.default;
+  document.getElementById('asisec').innerHTML=accs.map((a,i)=>`<div class="asiitem" onclick="togAcc(${i},this)"><div class="asico">${a.ico}</div><div class="asinfo"><div class="asname">${a.name}</div><div class="asnum">${a.num}</div></div><div class="asbal">${a.bal}</div><div class="aschk"><svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0b0f0e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`).join('');
+}
+function togAcc(i,el){if(selAccs.has(i)){selAccs.delete(i);el.classList.remove('sel');}else{selAccs.add(i);el.classList.add('sel');}document.getElementById('cbtn4').disabled=selAccs.size===0;}
+function startSync(){
+  goC(5);
+  const steps=['sr1','sr2','sr3','sr4','sr5'];
+  const lbls=['Verifying credentials…','Fetching account details…','Importing 90 days of transactions…','AI categorizing expenses…','Computing runway & cash flow…'];
+  const pcts=[15,35,60,80,100];
+  let i=0;
+  function tick(){
+    if(i>0)document.getElementById(steps[i-1]).className='srow srd';
+    if(i<steps.length){document.getElementById(steps[i]).className='srow sra';document.getElementById('sfill').style.width=pcts[i]+'%';document.getElementById('slbl').textContent=lbls[i];i++;setTimeout(tick,900);}
+    else{setTimeout(()=>{buildSuccess();goC(6);},400);}
+  }
+  setTimeout(tick,400);
+}
+function buildSuccess(){
+  const accs=mockA[selBank]||mockA.default;
+  const sel=[...selAccs].map(i=>accs[i]);
+  connectedAccs.push(...sel.map(a=>({...a,bank:selBank})));
+  const tot=connectedAccs.reduce((s,a)=>s+(a.br||0),0);
+  document.getElementById('stotval').textContent='$'+tot.toLocaleString();
+  document.getElementById('stotsub').textContent=connectedAccs.length+' account'+(connectedAccs.length>1?'s':'')+' · synced just now';
+  document.getElementById('sburnval').textContent='$19,840/mo';
+  document.getElementById('srunval').textContent='6.4 mo runway';
+  document.getElementById('succonn').innerHTML=connectedAccs.map(a=>`<div class="connitem"><div class="conndot"></div><span class="connname">${a.bank} — ${a.name}</span><span class="connbal">${a.bal}</span><span class="connbadge">Live</span></div>`).join('');
+  // Update sidebar chips
+  const chips=document.getElementById('bankChips');
+  const colors=['#3affa0','#5ca8ff','#ffb830','#b48fff'];
+  chips.innerHTML='';
+  connectedAccs.forEach((a,i)=>{chips.innerHTML+=`<div class="accchip"><div class="accdot" style="background:${colors[i%4]}"></div><span class="accname">${a.bank}</span><span class="accbal">${a.bal}</span></div>`;});
+}
+function goC(step){
+  document.querySelectorAll('.cscreen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('csc-'+step).classList.add('active');
+  const map={1:1,2:2,3:3,4:4,5:5,6:5},cur=map[step];
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('cs'+i);
+    el.className='cstep'+(i<cur?' csd':i===cur?' csa':'');
+    if(i<5){document.getElementById('cl'+i).className='csline'+(i<cur?' csd':'');}
+  }
+  if(step===2)buildBankScreen();if(step===4)buildAccList();
+}
+function buildBankScreen(){
+  const isPay=selType2==='payment';
+  document.getElementById('bsearch').style.display=isPay?'none':'block';
+  document.getElementById('pgrid-wrap').style.display=isPay?'block':'none';
+  document.getElementById('cs2t').textContent=isPay?'Choose payment processor':'Search for your bank';
+  document.getElementById('cs2s').textContent=isPay?'Connect revenue sources to track income automatically':'We connect to 11,000+ institutions via Plaid';
+  if(isPay){document.getElementById('blist').innerHTML='';document.getElementById('pgrid').innerHTML=pays.map(p=>`<div class="pcard" onclick="selB('${p.name}','${p.ico}',this)"><div class="plogo">${p.ico}</div><div class="pname">${p.name}</div><div class="ptag">${p.desc}</div></div>`).join('');}
+  else{filterB('');}
+}
+function simAuth(){const btn=document.getElementById('cbtn3');btn.textContent='Connecting…';btn.disabled=true;setTimeout(()=>{btn.textContent='Connect securely →';goC(4);},1400);}
+function resetConn(){
+  selType2=null;selBank=null;selAccs=new Set();
+  ['cbtn1','cbtn2','cbtn3','cbtn4'].forEach(id=>{const b=document.getElementById(id);if(b){b.disabled=true;}});
+  document.getElementById('cbtn3').textContent='Connect securely →';
+  document.getElementById('buser').value='';document.getElementById('bpass').value='';
+  document.getElementById('mfasec').style.display='none';
+  document.getElementById('sfill').style.width='0%';
+  ['sr1','sr2','sr3','sr4','sr5'].forEach(id=>{const e=document.getElementById(id);if(e)e.className='srow';});
+  if(document.getElementById('sr1'))document.getElementById('sr1').className='srow sra';
+  document.querySelectorAll('.tycard').forEach(c=>c.classList.remove('sel'));
+  goC(1);
+}
+
+// ── DEMO DATA ──
+function loadDemo(){
+  const wb={SheetNames:['Income Statement','Cash Flow Statement','Balance Sheet','Dashboard'],Sheets:{}};
+  const IS=[['Runvy — Income Statement'],['Fiscal Year 2026'],[null,'Q1 2026','Q2 2026','Q3 2026','Q4 2026','FY 2026'],['REVENUE'],['    SaaS Subscriptions',22000,25800,29000,32400,109200],['    Consulting & Services',8500,9200,10000,11500,39200],['    One-time Revenue',3700,2000,1500,2800,10000],['TOTAL REVENUE',34200,37000,40500,46700,158400],[null],[' COST OF REVENUE'],['    Hosting & Infrastructure',1240,1350,1500,1650,5740],['    Payment Processing Fees',660,775,870,972,3277],['    Third-party Software',300,320,340,360,1320],['TOTAL COST OF REVENUE',2200,2445,2710,2982,10337],['GROSS PROFIT',32000,34555,37790,43718,148063],[null],['OPERATING EXPENSES'],['    Payroll & Benefits',11200,11200,11500,12000,45900],['    Sales & Marketing',1800,2200,2500,2800,9300],['    General & Administrative',980,1020,1050,1100,4150],['    Research & Development',2100,2300,2500,2700,9600],['    SaaS Tools & Software',156,156,165,165,642],['TOTAL OPERATING EXPENSES',16236,16876,17715,18765,69592],['OPERATING INCOME (EBITDA)',15764,17679,20075,24953,78471],[null],['    Income Tax Expense',3850,4308,4400,4400,16958],['NET INCOME',11914,13371,15675,20553,61513]];
+  const CF=[['Runvy — Cash Flow Statement'],['FY 2026 · Indirect Method'],[null,'Q1 2026','Q2 2026','Q3 2026','Q4 2026','FY 2026'],['OPERATING ACTIVITIES'],['    Net Income',11914,13371,15675,20553,61513],['    Depreciation & Amortization',207,207,207,207,828],['    Changes in Accounts Receivable',-1200,-800,-900,-700,-3600],['    Changes in Deferred Revenue',2400,1800,2000,2200,8400],['    Changes in Accounts Payable',300,200,150,250,900],['NET CASH FROM OPERATIONS',13621,14778,17132,22510,67041],[null],['INVESTING ACTIVITIES'],['    Capital Expenditures',-2748,-500,-1200,-800,-5248],['    Software & IP Investments',0,-500,0,-500,-1000],['NET CASH FROM INVESTING',-2748,-1000,-1200,-1300,-6248],[null],['FINANCING ACTIVITIES'],['    Capital Contributions',0,0,0,0,0],['NET CASH FROM FINANCING',0,0,0,0,0],[null],['NET CHANGE IN CASH',10873,13778,15932,21210,61793],['    Opening Cash Balance',95000,105873,119651,135583,95000],['CLOSING CASH BALANCE',105873,119651,135583,156793,156793]];
+  const BS=[['Runvy — Balance Sheet'],['As of Quarter End 2026'],[null,'Q1 2026','Q2 2026','Q3 2026','Q4 2026 (Est.)'],['ASSETS'],['  Current Assets'],['        Cash & Cash Equivalents',95000,113200,127600,143000],['        Accounts Receivable',8400,9200,10100,10800],['        Prepaid Expenses',1200,1200,1200,1200],['        Other Current Assets',500,500,600,600],['TOTAL CURRENT ASSETS',105100,124100,139500,155600],[null],['  Non-Current Assets'],['        PP&E — Gross',4646,5146,6346,7146],['        Less: Accumulated Depreciation',-621,-828,-1035,-1242],['        PP&E — Net',4025,4318,5311,5904],['TOTAL NON-CURRENT ASSETS',4025,4318,5311,5904],['TOTAL ASSETS',109125,128418,144811,161504],[null],["LIABILITIES & SHAREHOLDERS' EQUITY"],['  Current Liabilities'],['        Accounts Payable',1200,1100,1300,1200],['        Accrued Liabilities',800,900,1020,1150],['        Deferred Revenue',4800,6600,8600,10800],['        Tax Payable',3850,4308,4400,4400],['TOTAL CURRENT LIABILITIES',10650,12908,15320,17550],['TOTAL LIABILITIES',10650,12908,15320,17550],[null],["  Shareholders' Equity"],['        Common Stock & Paid-in Capital',50000,50000,50000,50000],['        Retained Earnings (YTD)',48475,65510,79491,93954],["TOTAL SHAREHOLDERS' EQUITY",98475,115510,129491,143954],['TOTAL LIABILITIES & EQUITY',109125,128418,144811,161504]];
+  const DB=[['Runvy — Dashboard'],['Auto-generated'],['Metric','Q1 2026','Q2 2026','Q3 2026','Q4 2026','FY 2026'],['Cash Balance (End of Period)',95000,113200,127600,143000,'—'],['Monthly Burn Rate',19000,18000,19840,20000,'—'],['Estimated Runway (months)',5,6.3,6.4,7.15,'—']];
+  wb.Sheets['Income Statement']=XLSX.utils.aoa_to_sheet(IS);
+  wb.Sheets['Cash Flow Statement']=XLSX.utils.aoa_to_sheet(CF);
+  wb.Sheets['Balance Sheet']=XLSX.utils.aoa_to_sheet(BS);
+  wb.Sheets['Dashboard']=XLSX.utils.aoa_to_sheet(DB);
+  XL=parseWB(wb);
+  document.getElementById('uploadScreen').classList.add('hidden');
+  document.getElementById('sfname').textContent='Demo data';
+  document.getElementById('sfsize').textContent='Sample';
+  populateAll();
+}
+
+
+// ── AUTH STATE ──
+let currentUser = null;
+
+// ── AUTH FUNCTIONS ──
+function switchTab(tab) {
+  document.getElementById('formLogin').style.display = tab==='login'?'block':'none';
+  document.getElementById('formSignup').style.display = tab==='signup'?'block':'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabSignup').classList.toggle('active', tab==='signup');
+}
+
+function clearAuthErr(form) {
+  document.getElementById(form+'Err').classList.remove('show');
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if(!email || !pass) { document.getElementById('loginErr').textContent='Please enter email and password.'; document.getElementById('loginErr').classList.add('show'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  setTimeout(() => {
+    const name = email.split('@')[0].replace(/[._-]/g,' ').replace(/\w/g,c=>c.toUpperCase());
+    loginSuccess({name, email, initials: name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()});
+  }, 1000);
+}
+
+function doSignup() {
+  const first = document.getElementById('signupFirst').value.trim();
+  const last = document.getElementById('signupLast').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass = document.getElementById('signupPass').value;
+  if(!first||!last||!email||!pass) { document.getElementById('signupErr').classList.add('show'); return; }
+  const btn = document.getElementById('signupBtn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('signupOk').classList.add('show');
+    setTimeout(() => {
+      loginSuccess({name: first+' '+last, email, initials:(first[0]+(last[0]||'')).toUpperCase()});
+    }, 900);
+  }, 1200);
+}
+
+function doSocialLogin(provider) {
+  const name = provider==='Google' ? 'Alex Johnson' : 'Alex J.';
+  setTimeout(() => loginSuccess({name, email:'alex@startup.com', initials:'AJ'}), 800);
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  document.getElementById('authOverlay').classList.add('hidden');
+  document.getElementById('userAvatar').textContent = user.initials;
+  document.getElementById('userNamePill').textContent = user.name.split(' ')[0];
+  document.getElementById('ptitle').textContent = 'Good morning, '+user.name.split(' ')[0]+' 👋';
+  document.getElementById('pdesc').textContent = 'FY 2026 · Know your runway. Always. · Upload Excel or connect your bank';
+  // show upload screen for new user
+  document.getElementById('uploadScreen').classList.remove('hidden');
+}
+
+function showProfile() {
+  if(confirm('Sign out of Runvy?')) {
+    currentUser = null;
+    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('uploadScreen').classList.add('hidden');
+    document.getElementById('loginBtn').textContent='Sign in →';
+    document.getElementById('loginBtn').disabled=false;
+    document.getElementById('loginEmail').value='';
+    document.getElementById('loginPass').value='';
+  }
+}
+
+// ── BANK MODAL ──
+const bmBanks=[
+  {ico:'🏦',name:'Bank of America',type:'Business & Personal',bg:'#e3183722'},
+  {ico:'🏛',name:'Chase',type:'Business & Personal',bg:'#117aba22'},
+  {ico:'💚',name:'Mercury',type:'Startup Banking',bg:'#5effb122'},
+  {ico:'🔵',name:'Wells Fargo',type:'Business & Personal',bg:'#cc000022'},
+  {ico:'⚡',name:'Brex',type:'Corporate Card',bg:'#7c5cfc22'},
+  {ico:'🌿',name:'SVB / First Citizens',type:'Startup Banking',bg:'#00a65122'},
+  {ico:'💎',name:'Ramp',type:'Corporate Card',bg:'#ff6b3522'},
+  {ico:'🔶',name:'Relay',type:'Business Banking',bg:'#f5a62322'},
+  {ico:'🏢',name:'Citibank',type:'Business & Personal',bg:'#003b8e22'},
+  {ico:'🟠',name:'Capital One',type:'Business & Personal',bg:'#d0302722'},
+];
+const bmPays=[
+  {ico:'💳',name:'Stripe',desc:'Payment processing'},
+  {ico:'🅿️',name:'PayPal',desc:'Business payments'},
+  {ico:'⬛',name:'Square',desc:'POS & online'},
+  {ico:'🛍',name:'Shopify Payments',desc:'E-commerce'},
+  {ico:'📦',name:'Amazon Pay',desc:'Marketplace'},
+];
+const bmMockAccs={
+  'Mercury':[{ico:'💼',name:'Mercury Business Checking',num:'••••4821',bal:'$84,200',br:84200},{ico:'💰',name:'Mercury Savings',num:'••••9340',bal:'$12,400',br:12400}],
+  'Brex':[{ico:'💳',name:'Brex Corporate Card',num:'••••7721',bal:'$12,400',br:12400}],
+  'Chase':[{ico:'💼',name:'Chase Business Checking',num:'••••3310',bal:'$45,000',br:45000},{ico:'💳',name:'Chase Ink Business',num:'••••8820',bal:'$3,200',br:3200}],
+  'Stripe':[{ico:'⚡',name:'Stripe Balance',num:'acct_••••',bal:'$8,740',br:8740}],
+  'default':[{ico:'🏦',name:'Business Checking',num:'••••1234',bal:'$50,000',br:50000}],
+};
+
+let bmStep=1, bmType=null, bmBank=null, bmSelAccs=new Set();
+
+function openBankModal(){
+  bmStep=1; bmType=null; bmBank=null; bmSelAccs=new Set();
+  document.getElementById('bankModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  bmRender();
+}
+
+function closeBankModal(){
+  document.getElementById('bankModal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+
+function bmRender(){
+  document.querySelectorAll('.bm-screen').forEach(s=>s.classList.remove('active'));
+  const sc=document.getElementById('bms-'+bmStep);
+  if(sc)sc.classList.add('active');
+  // steps indicator
+  const map={1:1,2:2,3:3,4:4,5:5,6:5};
+  const cur=map[bmStep]||1;
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('bms'+i);
+    if(el)el.className='bms'+(i<cur?' bmd':i===cur?' bma':'');
+    const ln=document.getElementById('bml'+i);
+    if(ln)ln.className='bms-line'+(i<cur?' bmd':'');
+  }
+  // buttons
+  const btnRow=document.getElementById('bmBtnRow');
+  const back=document.getElementById('bmBtnBack');
+  const next=document.getElementById('bmBtnNext');
+  if(bmStep>=5){btnRow.style.display='none';}
+  else{
+    btnRow.style.display='flex';
+    back.style.display=bmStep>1?'block':'none';
+    next.textContent=bmStep===4?'Connect selected →':'Continue →';
+    next.disabled=true;
+    if(bmStep===1&&bmType)next.disabled=false;
+    if(bmStep===2&&bmBank)next.disabled=false;
+    if(bmStep===3){next.disabled=false;next.textContent='Connect securely →';}
+    if(bmStep===4&&bmSelAccs.size>0)next.disabled=false;
+    if(bmStep===6){next.textContent='Done';next.disabled=false;btnRow.style.display='flex';}
+  }
+  if(bmStep===2)bmBuildBankScreen();
+  if(bmStep===4)bmBuildAccList();
+}
+
+function bmSelType(el,type){
+  bmType=type;
+  document.querySelectorAll('.bm-type').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('bmBtnNext').disabled=false;
+}
+
+function bmBuildBankScreen(){
+  const isPay=bmType==='payment';
+  document.getElementById('bm-bankwrap').style.display=isPay?'none':'block';
+  document.getElementById('bm-paywrap').style.display=isPay?'block':'none';
+  if(isPay){
+    document.getElementById('bmPgrid').innerHTML=bmPays.map(p=>`<div class="bm-pcard ${bmBank===p.name?'sel':''}" onclick="bmSelB('${p.name}','${p.ico}',this)"><div style="font-size:1.4rem;margin-bottom:4px">${p.ico}</div><div style="font-size:.73rem;font-weight:500">${p.name}</div><div style="font-size:.6rem;color:var(--text3)">${p.desc}</div></div>`).join('');
+  } else {
+    bmFilterB('');
+  }
+}
+
+function bmFilterB(v){
+  const filt=bmBanks.filter(b=>b.name.toLowerCase().includes(v.toLowerCase()));
+  document.getElementById('bmBlist').innerHTML=filt.map(b=>`<div class="bm-bitem ${bmBank===b.name?'sel':''}" onclick="bmSelB('${b.name}','${b.ico}',this)"><div class="bm-blogo" style="background:${b.bg}">${b.ico}</div><div style="flex:1"><div class="bm-bname">${b.name}</div><div class="bm-btype">${b.type}</div></div><div class="bm-check"><svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0b0f0e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`).join('');
+}
+
+function bmSelB(name,ico,el){
+  bmBank=name;
+  document.querySelectorAll('.bm-bitem,.bm-pcard').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('bmBtnNext').disabled=false;
+  document.getElementById('bmAuthName').textContent=name;
+  document.getElementById('bmAuthLogo').textContent=ico;
+}
+
+function bmChkAuth(){
+  const u=document.getElementById('bmUser').value,p=document.getElementById('bmPass').value;
+  if(u.length>2&&p.length>2){setTimeout(()=>{document.getElementById('bmMfa').style.display='block';},600);}
+}
+
+function bmBuildAccList(){
+  bmSelAccs=new Set();
+  const accs=bmMockAccs[bmBank]||bmMockAccs.default;
+  document.getElementById('bmAccList').innerHTML=accs.map((a,i)=>`<div class="bm-accitem" onclick="bmTogAcc(${i},this)"><div class="bm-accico">${a.ico}</div><div class="bm-accinfo"><div class="bm-accname">${a.name}</div><div class="bm-accnum">${a.num}</div></div><div class="bm-accbal">${a.bal}</div><div class="bm-acchk"><svg width="8" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#0b0f0e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`).join('');
+}
+
+function bmTogAcc(i,el){
+  if(bmSelAccs.has(i)){bmSelAccs.delete(i);el.classList.remove('sel');}
+  else{bmSelAccs.add(i);el.classList.add('sel');}
+  document.getElementById('bmBtnNext').disabled=bmSelAccs.size===0;
+}
+
+function bmBack(){
+  if(bmStep>1)bmStep--;
+  bmRender();
+}
+
+function bmNext(){
+  if(bmStep===6){closeBankModal();return;}
+  if(bmStep===3){
+    const btn=document.getElementById('bmBtnNext');
+    btn.textContent='Connecting…';btn.disabled=true;
+    setTimeout(()=>{bmStep=4;bmRender();},1400);
+    return;
+  }
+  bmStep++;
+  bmRender();
+  if(bmStep===5)bmRunSync();
+}
+
+function bmRunSync(){
+  const rows=['bmsr1','bmsr2','bmsr3','bmsr4','bmsr5'];
+  const lbls=['Verifying credentials…','Fetching account details…','Importing 90 days of transactions…','AI categorizing expenses…','Computing runway & cash flow…'];
+  const pcts=[15,35,60,80,100];
+  let i=0;
+  function tick(){
+    if(i>0)document.getElementById(rows[i-1]).className='bm-srow sd';
+    if(i<rows.length){
+      document.getElementById(rows[i]).className='bm-srow sa';
+      document.getElementById('bmFill').style.width=pcts[i]+'%';
+      document.getElementById('bmSlbl').textContent=lbls[i];
+      i++;setTimeout(tick,900);
+    } else {setTimeout(()=>{bmBuildSuccess();bmStep=6;bmRender();},400);}
+  }
+  setTimeout(tick,400);
+}
+
+function bmBuildSuccess(){
+  const accs=bmMockAccs[bmBank]||bmMockAccs.default;
+  const sel=[...bmSelAccs].map(i=>accs[i]);
+  connectedAccs.push(...sel.map(a=>({...a,bank:bmBank})));
+  document.getElementById('bmConnList').innerHTML=connectedAccs.map(a=>`<div class="bm-conn-item"><div class="bm-conn-dot"></div><span class="bm-conn-name">${a.bank} — ${a.name}</span><span class="bm-conn-bal">${a.bal}</span><span class="bm-conn-badge">Live</span></div>`).join('');
+  // update sidebar chips
+  const chips=document.getElementById('bankChips');
+  const colors=['#3affa0','#5ca8ff','#ffb830','#b48fff','#ff5c5c'];
+  chips.innerHTML='';
+  connectedAccs.forEach((a,i)=>{chips.innerHTML+=`<div class="accchip"><div class="accdot" style="background:${colors[i%5]}"></div><span class="accname">${a.bank}</span><span class="accbal">${a.bal}</span></div>`;});
+  // update topbar tax alert
+  if(XL.is&&XL.is.q.tax[1]){document.getElementById('taxalert').style.display='flex';}
+}
+
+function resetUpload(){
+  document.getElementById('uploadScreen').classList.remove('hidden');
+  document.getElementById('lbar').style.display='none';
+  document.getElementById('llbl').style.display='none';
+  document.getElementById('lfill').style.width='0%';
+  document.getElementById('lfill').style.background='var(--green)';
+  document.getElementById('llbl').style.color='var(--text2)';
+  document.getElementById('fileInput').value='';
+}
+</script>
+</body>
+</html>
